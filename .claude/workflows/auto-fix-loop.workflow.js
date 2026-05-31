@@ -167,6 +167,7 @@ if (fixedFiles.length > 0) {
 phase('Learn')
 
 const fixedIssues = fixResults.filter(Boolean).filter(r => r.fixed)
+let learnResult = null
 if (fixedIssues.length > 0) {
   const patterns = fixedIssues.map(r =>
     `- **${r.description}**: ${r.change_summary || 'fixed'}`

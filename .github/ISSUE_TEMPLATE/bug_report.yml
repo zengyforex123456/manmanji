@@ -1,0 +1,52 @@
+name: Bug 报告
+description: 报告一个 bug，帮助我们改进产品
+title: "[Bug] "
+labels: ["bug", "triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: "## 感谢你的反馈！请填写以下信息帮助快速定位问题"
+  - type: input
+    id: summary
+    attributes:
+      label: 问题简述
+      description: 用一句话描述发生了什么
+      placeholder: "如：手机端点击'开始答题'后页面白屏"
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 平台
+      options: ["PC 浏览器", "H5/手机浏览器", "微信小程序", "全部"]
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 严重程度
+      options: ["阻断（完全不能用）", "严重（影响核心功能）", "一般（有 workaround）", "轻微（显示问题）"]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 按顺序列出操作步骤
+      placeholder: "1. 打开首页\n2. 点击'真题精练'\n3. 选择题库\n4. 点击'开始答题'"
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+      placeholder: "应该显示题目和选项"
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+      placeholder: "页面白屏，控制台报错：TypeError: Cannot read property 'length'"
+  - type: input
+    id: url
+    attributes:
+      label: 页面链接（如有）
+      placeholder: "https://..."
