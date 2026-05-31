@@ -46,7 +46,7 @@ log(typeResult ? `TypeCheck: ${typeResult.configured ? (typeResult.passed ? 'PAS
 // === Phase: Test (only if lint and typecheck pass) ===
 phase('Test')
 let testResult = null
-if ((!lintResult || lintResult.passed) && (!typeResult || typeResult.passed)) {
+if ((!lintResult || !lintResult.configured || lintResult.passed) && (!typeResult || !typeResult.configured || typeResult.passed)) {
   testResult = await agent(
     `Run tests for this project and report results with coverage.
 
