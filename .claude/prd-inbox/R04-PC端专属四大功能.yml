@@ -1,0 +1,21 @@
+id: R04
+source: 升级需求.txt#6.2
+summary: "PC端批量下载+大屏模考+数据总览+全站搜索"
+category: feature
+priority: Should
+roi_score: 78
+detail: >
+  补足小程序短板，新增PC端四大专属功能：
+  1. 批量资料下载（讲义/口诀手册/考点清单）
+  2. 大屏全真模考（CBT机考模拟，已在app.js中实现基础版）
+  3. 多科目并行学习数据总览
+  4. 全站关键词精准搜索（已在app.js中实现基础版）
+acceptance:
+  - "资料下载支持PDF/打印格式"
+  - "模考界面适配1920x1080分辨率"
+  - "数据总览显示各科目学习进度百分比"
+  - "搜索支持跨科目关键词检索"
+suggested_assignee: FE
+effort: medium
+drafted_at: 2026-05-31
+status: draft

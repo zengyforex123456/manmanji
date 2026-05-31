@@ -1,0 +1,19 @@
+id: R05
+source: 升级需求.txt#7 + development_plan.md
+summary: "微信支付接入（Web+小程序双端）"
+category: feature
+priority: Must
+roi_score: 92
+detail: >
+  接入微信支付，支持会员付费、单科购买、全站通卡。
+  Web端使用微信支付API，小程序端使用JSSDK(wx.pay)。
+  统一订单中心，后端校验金额防篡改。
+acceptance:
+  - "支付成功后即时开通会员权限"
+  - "支付失败展示明确错误原因"
+  - "支付回调幂等处理（防重复发货）"
+  - "订单记录永久保存用户端可查"
+suggested_assignee: BE
+effort: large
+drafted_at: 2026-05-31
+status: draft

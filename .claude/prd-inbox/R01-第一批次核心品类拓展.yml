@@ -1,0 +1,18 @@
+id: R01
+source: 升级需求.txt#4.1
+summary: "拓展第一批次5大核心爆款赛道"
+category: feature
+priority: Must
+roi_score: 95
+detail: >
+  在现有中级经济师基础上，拓展人力资源管理师、初级/中级会计师、
+  税务师（精简通关版）、教师资格证（幼/小/中）、社会工作者（初/中）
+  5大考试品类。复用现有功能模板，仅替换教研内容。
+acceptance:
+  - "每个新品类包含：考情分析、分级考点、碎片音频、真题题库、复盘中心、备考规划"
+  - "品类切换在2步内完成"
+  - "学习进度、错题记录按品类独立存储"
+suggested_assignee: content
+effort: large
+drafted_at: 2026-05-31
+status: draft

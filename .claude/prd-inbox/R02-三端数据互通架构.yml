@@ -1,0 +1,17 @@
+id: R02
+source: 升级需求.txt#5
+summary: "PC+H5+小程序三端数据实时同步"
+category: feature
+priority: Must
+roi_score: 90
+detail: >
+  搭建PC官网+移动端H5自适应+微信小程序三端一体架构。
+  用户数据、会员权限、学习进度、错题记录、收藏内容全域实时同步。
+acceptance:
+  - "PC端登录后学习进度与小程序一致"
+  - "会员购买后三端即时生效"
+  - "错题记录任意端添加后其他端可见"
+suggested_assignee: BE
+effort: large
+drafted_at: 2026-05-31
+status: draft

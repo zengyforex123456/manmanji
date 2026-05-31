@@ -1,0 +1,23 @@
+id: R08
+source: 升级需求.txt#3.4 + auto-fix-loop fixes
+summary: "极简大龄友好UI交互全面落地"
+category: ux
+priority: Should
+roi_score: 80
+detail: >
+  全站统一执行大龄关怀标准：
+  - 极简低干扰界面，全站无广告弹窗
+  - 大字护眼模式（字体缩放至150%不破损）
+  - 所有操作两步内完成
+  - 触控区域≥44px，对比度≥4.5:1
+  - 字号≥16px（通过字体缩放可达）
+  （auto-fix-loop 已修复部分：搜索防抖、魔法数字、深拷贝去重、字号、触控、对比度、!important）
+acceptance:
+  - "护眼模式一键切换"
+  - "字体缩放三档：标准/中等/大号"
+  - "所有弹窗有明显关闭按钮（≥44px）"
+  - "Lighthouse Accessibility ≥90"
+suggested_assignee: FE
+effort: medium
+drafted_at: 2026-05-31
+status: draft

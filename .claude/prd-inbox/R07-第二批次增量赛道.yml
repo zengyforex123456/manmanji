@@ -1,0 +1,16 @@
+id: R07
+source: 升级需求.txt#4.2
+summary: "拓展第二批次职场刚需增量赛道"
+category: feature
+priority: Could
+roi_score: 55
+detail: >
+  拓展一建/二建（极简笔试版）、消防工程师、银行/证券/基金从业、
+  健康管理师、心理咨询师。复用第一批次模板。
+acceptance:
+  - "每新增品类上线周期不超过2周"
+  - "内容质量与第一批次一致"
+suggested_assignee: content
+effort: large
+drafted_at: 2026-05-31
+status: draft

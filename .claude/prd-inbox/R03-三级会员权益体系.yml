@@ -1,0 +1,20 @@
+id: R03
+source: 升级需求.txt#7
+summary: "免费+单科会员+全站通卡三级会员体系"
+category: feature
+priority: Must
+roi_score: 88
+detail: >
+  采用「免费试用+单科会员+全站通卡」三级权益体系。
+  免费: 基础考点+每日限量真题+基础打卡
+  单科: 全考点+无限音频+无限刷题+智能复盘+错题专项
+  全站通卡: 所有品类全部权限，主推高端套餐
+acceptance:
+  - "免费用户触发付费功能时弹出会员购买页"
+  - "单科会员仅解锁对应科目，其他科目显示锁定"
+  - "全站通卡用户所有品类无障碍访问"
+  - "会员到期前7天提醒续费"
+suggested_assignee: FE
+effort: medium
+drafted_at: 2026-05-31
+status: draft

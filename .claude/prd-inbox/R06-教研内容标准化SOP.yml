@@ -1,0 +1,21 @@
+id: R06
+source: 升级需求.txt#8
+summary: "全科目教研内容标准化流水线"
+category: content
+priority: Should
+roi_score: 75
+detail: >
+  所有拓展科目严格执行统一教研流程：
+  1. 考纲筛选（保留80%高分考点）
+  2. 去理论通俗化改造
+  3. 题库清洗精简（近5年高频真题）
+  4. 标准化音频录制
+  5. 月度动态更新迭代
+acceptance:
+  - "每个品类提供内容验收清单"
+  - "口诀记忆4-8字，通俗可记"
+  - "每月1日更新上月考纲变动"
+suggested_assignee: content
+effort: medium
+drafted_at: 2026-05-31
+status: draft
