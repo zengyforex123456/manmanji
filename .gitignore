@@ -4,9 +4,10 @@
 *.tmp
 
 # 依赖
-/node_modules/
+**/node_modules/
 /dist/
 /build/
+/server/package-lock.json
 
 # 敏感信息
 .env
