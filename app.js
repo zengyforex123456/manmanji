@@ -21,6 +21,14 @@ let currentMockIndex = 0;
 let mockTimerSeconds = 2700; // 45分钟
 let mockTimerInterval = null;
 
+// HTML实体转义 — 防XSS
+function sanitizeHTML(str) {
+  if (!str || typeof str !== 'string') return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 // 初始化数据状态
 function initUserState() {
   const local = localStorage.getItem("manmanji_user_state");
@@ -373,8 +381,8 @@ function savePCPointChange(idx) {
   }
 
   // 更新主数据
-  COURSE_DATA.keyPoints[userState.activeSubjectId][idx].interpretation = nextInterpret;
-  COURSE_DATA.keyPoints[userState.activeSubjectId][idx].mnemonic = nextMnemonic;
+  COURSE_DATA.keyPoints[userState.activeSubjectId][idx].interpretation = sanitizeHTML(nextInterpret);
+  COURSE_DATA.keyPoints[userState.activeSubjectId][idx].mnemonic = sanitizeHTML(nextMnemonic);
 
   // 关闭编辑模式
   togglePCEditMode(idx, false);
