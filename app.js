@@ -33,7 +33,7 @@ function initUserState() {
   } else {
     userState = JSON.parse(JSON.stringify(DEFAULT_USER_STATE));
   }
-  
+
   // 兼容老版本，确保各个科目的独立状态槽齐全
   if (!userState.activeSubjectId) userState.activeSubjectId = "econ";
   if (!userState.membershipTier) userState.membershipTier = "vip";
@@ -51,7 +51,7 @@ function initUserState() {
       };
     }
   });
-  
+
   // 兼容根节点错题数
   syncGlobalStatsCount();
 }
@@ -87,24 +87,24 @@ function currentSubjState() {
 function changeGlobalSubject(subjId) {
   userState.activeSubjectId = subjId;
   saveState();
-  
+
   // 同步更新PC端下拉列表
   const pcSelector = document.getElementById("pc-subject-selector");
   if (pcSelector) pcSelector.value = subjId;
-  
+
   // 同步更新移动端头部标题
   const subjName = COURSE_DATA.subjects.find(s => s.id === subjId)?.name || "职业备考";
   const mobileHeaderTitle = document.getElementById("m-header-prog-title");
   if (mobileHeaderTitle) {
     mobileHeaderTitle.innerText = `慢慢记 - 大龄${subjName.replace("中级", "").replace("二级", "")}备考`;
   }
-  
+
   // 停止当前的音频播放以防声音错乱
   stopAudioPlayer();
-  
+
   // 重新加载大屏模考
   initMockExam();
-  
+
   // 刷新所有视图数据
   renderAll();
 }
@@ -124,16 +124,16 @@ function switchPCView(viewId, element) {
       }
     });
   }
-  
+
   // 视图面板切换
   const panels = document.querySelectorAll(".pc-view-panel");
   panels.forEach(p => p.classList.remove("active"));
-  
+
   const targetPanel = document.getElementById(`pc-view-${viewId}`);
   if (targetPanel) {
     targetPanel.classList.add("active");
   }
-  
+
   // 进入模考页自动重置模考
   if (viewId === "mock") {
     initMockExam();
@@ -158,20 +158,20 @@ function renderAll() {
 function renderLandingCategoryGrid() {
   const container = document.getElementById("landing-category-grid");
   if (!container) return;
-  
+
   const emojiMap = {
     econ: "📊", accounting: "📒", teacher: "🎓", social: "🤝",
     construct: "🏗️", hr: "👥", tax: "💰", acc_junior: "📗"
   };
   const hotList = ["econ", "accounting", "teacher", "hr"];
-  
+
   let html = "";
   COURSE_DATA.subjects.forEach(subj => {
     const kpCount = (COURSE_DATA.keyPoints[subj.id] || []).length;
     const quizCount = (COURSE_DATA.quizzes[subj.id] || []).length;
     const emoji = emojiMap[subj.id] || "📚";
     const isHot = hotList.includes(subj.id);
-    
+
     html += `
       <div class="category-entry-card" onclick="enterSubjectFromLanding('${subj.id}')">
         ${isHot ? '<div class="category-badge-hot">热门</div>' : ''}
@@ -181,9 +181,9 @@ function renderLandingCategoryGrid() {
       </div>
     `;
   });
-  
+
   container.innerHTML = html;
-  
+
   // 更新首页统计
   const totalEl = document.getElementById("landing-total-subjects");
   if (totalEl) totalEl.innerText = COURSE_DATA.subjects.length;
@@ -199,12 +199,12 @@ function enterSubjectFromLanding(subjId) {
 function renderMembershipPricing() {
   const container = document.getElementById("membership-pricing-grid");
   if (!container) return;
-  
+
   let html = "";
   MEMBERSHIP_CONFIG.tiers.forEach(tier => {
     const isRecommended = tier.recommended;
     const isCurrent = userState.membershipTier === tier.id;
-    
+
     let featuresHtml = "";
     tier.features.forEach(f => {
       featuresHtml += `<li class="enabled">${f}</li>`;
@@ -212,10 +212,10 @@ function renderMembershipPricing() {
     (tier.disabled || []).forEach(f => {
       featuresHtml += `<li class="disabled">${f}</li>`;
     });
-    
+
     const ctaBg = isCurrent ? '#10b981' : (isRecommended ? '#d97706' : '#64748b');
     const ctaText = isCurrent ? '当前套餐 ✓' : '立即开通';
-    
+
     html += `
       <div class="membership-card ${isRecommended ? 'recommended' : ''}">
         ${isRecommended ? '<div class="membership-recommend-badge">🔥 性价比最高 · 主推套餐</div>' : ''}
@@ -229,7 +229,7 @@ function renderMembershipPricing() {
       </div>
     `;
   });
-  
+
   container.innerHTML = html;
 }
 
@@ -241,7 +241,7 @@ function renderMembershipPricing() {
 function renderParallelStatsGrid() {
   const container = document.getElementById("pc-parallel-subjects-grid");
   if (!container) return;
-  
+
   let html = "";
   COURSE_DATA.subjects.forEach(subj => {
     const state = userState.subjectsState[subj.id] || { pointsChecked: [], wrongQuestions: [], quizDoneCount: 0 };
@@ -249,11 +249,11 @@ function renderParallelStatsGrid() {
     const learnedCount = state.pointsChecked.length;
     const wrongCount = state.wrongQuestions.length;
     const isTodayChecked = state.checkIn ? "✅ 已打卡" : "⏳ 未打卡";
-    
+
     // 计算当前科目总考点数
     const totalPoints = (COURSE_DATA.keyPoints[subj.id] || []).length;
     const progressPercent = totalPoints > 0 ? Math.round((learnedCount / totalPoints) * 100) : 0;
-    
+
     html += `
       <div class="subj-card ${isActive ? 'active' : ''}" onclick="changeGlobalSubject('${subj.id}')">
         <div class="subj-card-header">
@@ -285,16 +285,16 @@ function renderParallelStatsGrid() {
       </div>
     `;
   });
-  
+
   container.innerHTML = html;
-  
+
   // 更新PC主大纲进度条和统计
   const currentSubj = COURSE_DATA.subjects.find(s => s.id === userState.activeSubjectId);
   const curState = currentSubjState();
   const totalPointsCur = (COURSE_DATA.keyPoints[userState.activeSubjectId] || []).length;
   const learnedCountCur = curState.pointsChecked.length;
   const progressPercentCur = totalPointsCur > 0 ? Math.round((learnedCountCur / totalPointsCur) * 100) : 0;
-  
+
   // 更新PC上方编辑区主标题
   const editorTitle = document.getElementById("editor-title-subject");
   if (editorTitle) {
@@ -306,13 +306,13 @@ function renderParallelStatsGrid() {
 function renderPCPointsEditor() {
   const container = document.getElementById("pc-points-list");
   if (!container) return;
-  
+
   const kps = COURSE_DATA.keyPoints[userState.activeSubjectId] || [];
   if (kps.length === 0) {
     container.innerHTML = `<div style="padding:20px; text-align:center; color:var(--text-secondary); font-size:12px;">暂无教研考点数据，请切换科目。</div>`;
     return;
   }
-  
+
   let html = "";
   kps.forEach((kp, idx) => {
     const starString = "★".repeat(kp.star) + "☆".repeat(3 - kp.star);
@@ -322,22 +322,22 @@ function renderPCPointsEditor() {
           <span style="font-weight:800; font-size:0.95rem; color:var(--accent);">📌 考点：${kp.title}</span>
           <span style="color:var(--primary-2star); font-size:11px; font-weight:700;">优先级: ${starString}</span>
         </div>
-        
+
         <div style="display:grid; grid-template-columns: 80px 1fr; font-size:12px; gap:6px;">
           <div style="font-weight:700; color:var(--text-secondary);">专业术语:</div>
           <div style="font-weight:700;">${kp.term}</div>
-          
+
           <div style="font-weight:700; color:var(--text-secondary);">白话大翻身:</div>
           <div id="pc-interpret-view-${idx}" style="color:#0f172a; line-height:1.4;">${kp.interpretation}</div>
           <textarea id="pc-interpret-edit-${idx}" style="display:none; width:100%; height:60px; font-family:inherit; font-size:12px; padding:4px;" class="search-input">${kp.interpretation}</textarea>
-          
+
           <div style="font-weight:700; color:var(--text-secondary); line-height:30px;">记忆口诀:</div>
           <div>
             <div id="pc-mnemonic-view-${idx}" style="font-weight:800; color:#047857; background:#ecfdf5; border:1px dashed #10b981; padding:3px 10px; border-radius:3px; display:inline-block; font-size:13px;">${kp.mnemonic}</div>
             <input type="text" id="pc-mnemonic-edit-${idx}" style="display:none; width:100%; font-size:13px; font-weight:800; padding:4px;" value="${kp.mnemonic}" class="search-input">
           </div>
         </div>
-        
+
         <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:4px;">
           <button id="pc-btn-edit-${idx}" class="btn-primary" style="padding:4px 10px; font-size:11px;" onclick="togglePCEditMode(${idx}, true)">编辑讲义</button>
           <button id="pc-btn-save-${idx}" class="btn-primary" style="padding:4px 10px; font-size:11px; background:#10b981; display:none;" onclick="savePCPointChange(${idx})">发布同步</button>
@@ -346,7 +346,7 @@ function renderPCPointsEditor() {
       </div>
     `;
   });
-  
+
   container.innerHTML = html;
 }
 
@@ -356,7 +356,7 @@ function togglePCEditMode(idx, isEditing) {
   document.getElementById(`pc-interpret-edit-${idx}`).style.display = isEditing ? 'block' : 'none';
   document.getElementById(`pc-mnemonic-view-${idx}`).style.display = isEditing ? 'none' : 'inline-block';
   document.getElementById(`pc-mnemonic-edit-${idx}`).style.display = isEditing ? 'block' : 'none';
-  
+
   document.getElementById(`pc-btn-edit-${idx}`).style.display = isEditing ? 'none' : 'inline-block';
   document.getElementById(`pc-btn-save-${idx}`).style.display = isEditing ? 'inline-block' : 'none';
   document.getElementById(`pc-btn-cancel-${idx}`).style.display = isEditing ? 'inline-block' : 'none';
@@ -366,43 +366,48 @@ function togglePCEditMode(idx, isEditing) {
 function savePCPointChange(idx) {
   const nextInterpret = document.getElementById(`pc-interpret-edit-${idx}`).value.trim();
   const nextMnemonic = document.getElementById(`pc-mnemonic-edit-${idx}`).value.trim();
-  
+
   if (!nextInterpret || !nextMnemonic) {
     alert("讲义大白话和口诀不能为空！");
     return;
   }
-  
+
   // 更新主数据
   COURSE_DATA.keyPoints[userState.activeSubjectId][idx].interpretation = nextInterpret;
   COURSE_DATA.keyPoints[userState.activeSubjectId][idx].mnemonic = nextMnemonic;
-  
+
   // 关闭编辑模式
   togglePCEditMode(idx, false);
-  
+
   // 重置DOM
   renderPCPointsEditor();
   renderMobilePointsList();
   renderMobileHomeStatsAndTasks();
-  
+
   // Toast提示
   showMobileToast("教研口诀已即时发布同步");
 }
 
 // 3.3 全站跨科目精准搜索
+let globalSearchTimer = null;
+function debouncedSearch(query) {
+  clearTimeout(globalSearchTimer);
+  globalSearchTimer = setTimeout(function() { triggerGlobalSearch(query); }, 300);
+}
 function triggerGlobalSearch(query) {
   const container = document.getElementById("pc-search-results-container");
   const stats = document.getElementById("pc-search-results-stats");
   if (!container || !stats) return;
-  
+
   const q = query.trim().toLowerCase();
   if (!q) {
     stats.innerText = "输入关键词开始检索全科目备考数据库...";
     container.innerHTML = "";
     return;
   }
-  
+
   let results = [];
-  
+
   // 遍历所有科目进行搜索
   Object.keys(COURSE_DATA.keyPoints).forEach(subjId => {
     const subjName = COURSE_DATA.subjects.find(s => s.id === subjId)?.name || subjId;
@@ -422,14 +427,14 @@ function triggerGlobalSearch(query) {
       }
     });
   });
-  
+
   stats.innerText = `找到与 "${query}" 相关的全站备考考点 ${results.length} 个：`;
-  
+
   if (results.length === 0) {
     container.innerHTML = `<div style="padding:30px; text-align:center; color:var(--text-secondary); font-size:12px; background:white; border-radius: var(--radius-md); border: 1px solid var(--border-color);">未搜索到任何相关考点口诀，换个词试试吧（如：弹性、折旧、素质教育）</div>`;
     return;
   }
-  
+
   let html = "";
   results.forEach(res => {
     const starStr = "★".repeat(res.kp.star);
@@ -450,7 +455,7 @@ function triggerGlobalSearch(query) {
       </div>
     `;
   });
-  
+
   container.innerHTML = html;
 }
 
@@ -458,13 +463,13 @@ function triggerGlobalSearch(query) {
 function jumpToSearchedKeyPoint(subjId, kpId) {
   // 1. 切换到对应的科目
   changeGlobalSubject(subjId);
-  
+
   // 2. 切换PC视图为看板/教研
   switchPCView('dashboard');
-  
+
   // 3. 切换Mobile端Tab到考点速记
   switchTab('camp');
-  
+
   // 4. 定位并高亮该卡片
   setTimeout(() => {
     const cardEl = document.getElementById(`kp-card-${kpId}`);
@@ -485,10 +490,10 @@ function simulateDownload(id, filename) {
   const container = document.getElementById(`progress-container-${id}`);
   const bar = document.getElementById(`progress-bar-${id}`);
   if (!container || !bar) return;
-  
+
   container.style.display = "block";
   bar.style.width = "0%";
-  
+
   let progress = 0;
   const interval = setInterval(() => {
     progress += 5;
@@ -497,12 +502,12 @@ function simulateDownload(id, filename) {
       clearInterval(interval);
       setTimeout(() => {
         container.style.display = "none";
-        
+
         // 触发真实测试文件下载
         const blob = new Blob([
           `--- 慢慢记大龄通用备考系统专属打包资料 ---\n\n文件名称: ${filename}\n生成时间: ${new Date().toLocaleString()}\n提示: 请用大字打印，祝大龄考友门无需死记硬背，轻松通关！`
         ], { type: 'text/plain;charset=utf-8' });
-        
+
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -511,7 +516,7 @@ function simulateDownload(id, filename) {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        
+
         alert(`🎉 备考包《${filename}》已在PC端生成并触发本地打包下载！`);
       }, 200);
     }
@@ -525,7 +530,7 @@ function initMockExam() {
   mockAnswers = {};
   currentMockIndex = 0;
   mockExamActive = true;
-  
+
   // 重置时间为 45 分钟
   mockTimerSeconds = 2700;
   clearInterval(mockTimerInterval);
@@ -538,7 +543,7 @@ function initMockExam() {
       submitMockExam();
     }
   }, 1000);
-  
+
   renderMockExamNavigator();
   renderMockQuestionDetail();
 }
@@ -555,17 +560,17 @@ function renderMockExamNavigator() {
   const container = document.getElementById("mock-question-nav");
   const headerSubj = document.getElementById("mock-exam-subject-title");
   if (!container) return;
-  
+
   const currentSubj = COURSE_DATA.subjects.find(s => s.id === userState.activeSubjectId);
   if (headerSubj) {
     headerSubj.innerText = `${currentSubj?.name || ''} - 电脑大屏全真机考模拟`;
   }
-  
+
   if (mockQuestions.length === 0) {
     container.innerHTML = "";
     return;
   }
-  
+
   let html = "";
   mockQuestions.forEach((q, idx) => {
     const isAnswered = mockAnswers[q.id] !== undefined;
@@ -573,10 +578,10 @@ function renderMockExamNavigator() {
     let cls = "cbt-nav-btn";
     if (isActive) cls += " active";
     else if (isAnswered) cls += " answered";
-    
+
     html += `<button class="${cls}" onclick="switchMockQuestion(${idx})">${idx + 1}</button>`;
   });
-  
+
   container.innerHTML = html;
 }
 
@@ -584,7 +589,7 @@ function renderMockExamNavigator() {
 function renderMockQuestionDetail() {
   const container = document.getElementById("mock-question-body-container");
   if (!container) return;
-  
+
   if (mockQuestions.length === 0) {
     container.innerHTML = `
       <div style="text-align:center; padding:50px; color:var(--text-secondary);">
@@ -593,10 +598,10 @@ function renderMockQuestionDetail() {
     `;
     return;
   }
-  
+
   const q = mockQuestions[currentMockIndex];
   const userSelection = mockAnswers[q.id];
-  
+
   let optionsHtml = "";
   q.options.forEach(opt => {
     const isSelected = userSelection === opt.key;
@@ -609,7 +614,7 @@ function renderMockQuestionDetail() {
       </div>
     `;
   });
-  
+
   container.innerHTML = `
     <div style="flex:1;">
       <div style="font-size:11px; font-weight:800; color:var(--accent); background:var(--accent-light); padding:2px 8px; border-radius:3px; display:inline-block; margin-bottom:10px;">
@@ -620,7 +625,7 @@ function renderMockQuestionDetail() {
         ${optionsHtml}
       </div>
     </div>
-    
+
     <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color); padding-top:1rem; margin-top:1.5rem;">
       <button class="btn-primary" style="background:#64748b;" ${currentMockIndex === 0 ? 'disabled style="opacity:0.5; pointer-events:none;"':''} onclick="switchMockQuestion(${currentMockIndex - 1})">⬅️ 上一题</button>
       <div style="font-weight:700; font-size:12px; color:var(--text-secondary);">已答: ${Object.keys(mockAnswers).length}/${mockQuestions.length}</div>
@@ -644,28 +649,28 @@ function switchMockQuestion(index) {
 // 提交全真模拟考卷
 function submitMockExam() {
   clearInterval(mockTimerInterval);
-  
+
   if (mockQuestions.length === 0) return;
-  
+
   let correctCount = 0;
   mockQuestions.forEach(q => {
     if (mockAnswers[q.id] === q.answer) {
       correctCount++;
     }
   });
-  
+
   const score = Math.round((correctCount / mockQuestions.length) * 100);
   const isPassed = score >= 60;
-  
+
   // 渲染得分面板与错题报告
   const container = document.getElementById("mock-question-body-container");
   if (!container) return;
-  
+
   let analysisHtml = "";
   mockQuestions.forEach((q, idx) => {
     const userAns = mockAnswers[q.id] || "未作答";
     const isCorrect = userAns === q.answer;
-    
+
     // 如果回答错误，自动同步推送到小程序端错题本 (实现双向互通)
     if (!isCorrect) {
       const wrongList = currentSubjState().wrongQuestions;
@@ -675,7 +680,7 @@ function submitMockExam() {
         renderAll();
       }
     }
-    
+
     analysisHtml += `
       <div style="border-bottom:1px dashed var(--border-color); padding:10px 0;">
         <div style="font-weight:700; font-size:12px; display:flex; justify-content:space-between;">
@@ -690,7 +695,7 @@ function submitMockExam() {
       </div>
     `;
   });
-  
+
   container.innerHTML = `
     <div style="flex:1; overflow-y:auto; padding-right:10px;" class="no-scrollbar">
       <div style="text-align:center; padding:15px; background:${isPassed ? '#ecfdf5':'#fff1f2'}; border:1px solid ${isPassed ? '#10b981':'#fecaca'}; border-radius:8px; margin-bottom:15px;">
@@ -700,13 +705,13 @@ function submitMockExam() {
           答对 ${correctCount}/${mockQuestions.length} 题 | ${isPassed ? '🎉 恭喜达到及格标准！':'⚠️ 成绩不及格，错题已全自动加入小程序错题本'}
         </div>
       </div>
-      
+
       <div style="font-weight:800; font-size:13px; color:var(--accent); border-bottom:1.5px solid var(--accent); padding-bottom:4px; margin-bottom:8px;">
         🔍 答卷大白话解析报告
       </div>
       ${analysisHtml}
     </div>
-    
+
     <div style="text-align:center; padding-top:10px; border-top:1px solid var(--border-color); margin-top:10px;">
       <button class="btn-primary" onclick="initMockExam()">重新测试</button>
     </div>
@@ -723,7 +728,7 @@ function switchTab(tabId, element) {
   // 更新导航高亮
   const items = document.querySelectorAll(".app-tabbar .tab-item");
   items.forEach(item => item.classList.remove("active"));
-  
+
   if (element) {
     element.classList.add("active");
   } else {
@@ -734,11 +739,11 @@ function switchTab(tabId, element) {
       }
     });
   }
-  
+
   // 视图隐藏/显示
   const views = document.querySelectorAll(".phone-screen .app-view");
   views.forEach(v => v.classList.remove("active"));
-  
+
   const targetView = document.getElementById(`app-view-${tabId}`);
   if (targetView) targetView.classList.add("active");
 }
@@ -748,20 +753,20 @@ function renderMobileHomeStatsAndTasks() {
   const mDays = document.getElementById("m-stats-days");
   const mPoints = document.getElementById("m-stats-points");
   const mWrong = document.getElementById("m-stats-wrong");
-  
+
   // 同步主看板数据
   const s = currentSubjState();
   if (mDays) mDays.innerText = userState.daysStudied;
   if (mPoints) mPoints.innerText = s.pointsChecked.length;
   if (mWrong) mWrong.innerText = s.wrongQuestions.length;
-  
+
   // 渲染今日轻量任务卡
   const pointsContainer = document.getElementById("task-points-container");
   const quizContainer = document.getElementById("task-quiz-container");
-  
+
   const kps = COURSE_DATA.keyPoints[userState.activeSubjectId] || [];
   const quizzes = COURSE_DATA.quizzes[userState.activeSubjectId] || [];
-  
+
   if (pointsContainer) {
     let ptsHtml = "";
     kps.slice(0, 2).forEach(kp => {
@@ -778,7 +783,7 @@ function renderMobileHomeStatsAndTasks() {
     });
     pointsContainer.innerHTML = ptsHtml;
   }
-  
+
   if (quizContainer) {
     const quizDone = s.quizDoneCount >= quizzes.length && quizzes.length > 0;
     let quizHtml = `
@@ -792,7 +797,7 @@ function renderMobileHomeStatsAndTasks() {
     `;
     quizContainer.innerHTML = quizHtml;
   }
-  
+
   // 打卡状态更新
   const checkinBtn = document.getElementById("home-checkin-btn");
   if (checkinBtn) {
@@ -837,34 +842,34 @@ function filterCamp(type) {
   currentFilter = type;
   const badges = document.querySelectorAll(".camp-filters .filter-badge");
   badges.forEach(b => b.classList.remove("active"));
-  
+
   // 匹配高亮
   const badgeIdx = type === "all" ? 0 : (type === "star3" ? 1 : 2);
   badges[badgeIdx].classList.add("active");
-  
+
   renderMobilePointsList();
 }
 
 function renderMobilePointsList() {
   const container = document.getElementById("mobile-kp-list");
   if (!container) return;
-  
+
   const kps = COURSE_DATA.keyPoints[userState.activeSubjectId] || [];
   const s = currentSubjState();
-  
+
   let html = "";
   kps.forEach(kp => {
     // 过滤逻辑
     if (currentFilter === "star3" && kp.star !== 3) return;
     if (currentFilter === "star2" && kp.star !== 2) return;
-    
+
     const isDone = s.pointsChecked.includes(kp.id);
     const starLabel = kp.star === 3 ? "★★★ 核心必考" : "★★ 理解考点";
     const tagClass = kp.star === 3 ? "tag-3star" : "tag-2star";
-    
+
     // 查看该考点是否已经在艾宾浩斯复盘队列中
     const isInQueue = s.ebbinghausQueue.some(item => item.id === kp.id);
-    
+
     html += `
       <div class="kp-card star-${kp.star}" id="kp-card-${kp.id}">
         <div class="kp-header">
@@ -875,16 +880,16 @@ function renderMobilePointsList() {
           </div>
         </div>
         <div class="kp-name">${kp.title}</div>
-        
+
         <div class="mnemonic-box">
           记忆口诀：${kp.mnemonic}
         </div>
-        
+
         <div class="interpretation-box">
           <div class="interpretation-label">💡 大白话白话通俗解读</div>
           <div>${kp.interpretation}</div>
         </div>
-        
+
         <!-- 对比面板 -->
         <div class="contrast-panel">
           <div class="contrast-title">⚠️ 对比防混面板</div>
@@ -899,7 +904,7 @@ function renderMobilePointsList() {
             </div>
           </div>
         </div>
-        
+
         <div class="kp-actions">
           <button class="btn-primary" style="padding:4px 10px; font-size:10px; font-weight:700; ${isInQueue ? 'background:#d97706; border-color:#d97706;':''}" onclick="addPointToEbbinghaus('${kp.id}')">
             ${isInQueue ? '🔄 智能复盘倒计时中':'学会了，智能复盘'}
@@ -908,7 +913,7 @@ function renderMobilePointsList() {
       </div>
     `;
   });
-  
+
   if (html === "") {
     html = `<div style="text-align:center; padding:30px; color:var(--app-text-muted); font-size:11px;">无此优先级的考点口诀</div>`;
   }
@@ -919,13 +924,13 @@ function renderMobilePointsList() {
 function renderMobileAudioList() {
   const container = document.getElementById("mobile-audio-list");
   if (!container) return;
-  
+
   const tracks = COURSE_DATA.audios[userState.activeSubjectId] || [];
   if (tracks.length === 0) {
     container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--app-text-muted); font-size:11.5px;">暂无该科目的音频讲义。</div>`;
     return;
   }
-  
+
   let html = "";
   tracks.forEach(track => {
     const isPlaying = activeAudioTrack && activeAudioTrack.id === track.id;
@@ -939,14 +944,14 @@ function renderMobileAudioList() {
           ${isPlaying && isSpeechPlaying ? '⏸️' : '▶'}
         </div>
       </div>
-      
+
       <!-- 音频配套讲义提示区 -->
       <div style="background:var(--app-card-bg); border:1px solid var(--app-border); padding:8px 10px; border-radius:var(--radius-sm); font-size:10px; color:var(--app-text-muted); margin-top:-6px;">
         📖 <strong>听后速记:</strong> ${track.notes}
       </div>
     `;
   });
-  
+
   container.innerHTML = html;
 }
 
@@ -954,25 +959,25 @@ function renderMobileAudioList() {
 let activeQuizSubTab = "practice";
 function switchQuizSubTab(subTabId) {
   activeQuizSubTab = subTabId;
-  
+
   const tabs = document.querySelectorAll(".sub-header-tabs .sub-header-tab");
   tabs.forEach(t => t.classList.remove("active"));
-  
+
   if (subTabId === "practice") {
     tabs[0].classList.add("active");
   } else {
     tabs[1].classList.add("active");
   }
-  
+
   renderMobileQuizView();
 }
 
 function renderMobileQuizView() {
   const container = document.getElementById("mobile-quiz-content");
   if (!container) return;
-  
+
   const s = currentSubjState();
-  
+
   // 1. 刷题模式
   if (activeQuizSubTab === "practice") {
     const quizzes = COURSE_DATA.quizzes[userState.activeSubjectId] || [];
@@ -980,7 +985,7 @@ function renderMobileQuizView() {
       container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--app-text-muted);">暂无真题数据</div>`;
       return;
     }
-    
+
     // 如果全部刷完
     if (s.quizDoneCount >= quizzes.length) {
       container.innerHTML = `
@@ -993,12 +998,12 @@ function renderMobileQuizView() {
       `;
       return;
     }
-    
+
     const qIndex = s.quizDoneCount;
     const q = quizzes[qIndex];
-    
+
     const progressPercent = Math.round((qIndex / quizzes.length) * 100);
-    
+
     let optionsHtml = "";
     q.options.forEach(opt => {
       optionsHtml += `
@@ -1010,7 +1015,7 @@ function renderMobileQuizView() {
         </div>
       `;
     });
-    
+
     container.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px;">
         <span style="font-weight:700;">今日真题过关组 (${qIndex + 1}/${quizzes.length})</span>
@@ -1019,13 +1024,13 @@ function renderMobileQuizView() {
       <div class="quiz-progress-bar">
         <div class="quiz-progress-fill" style="width: ${progressPercent}%;"></div>
       </div>
-      
+
       <div class="quiz-card">
         <div class="quiz-question">${q.question}</div>
         <div class="quiz-options">
           ${optionsHtml}
         </div>
-        
+
         <div class="quiz-explanation" id="mobile-quiz-explain-box">
           <div class="explanation-title">💡 慢慢记解析说口语：</div>
           <div style="font-size:11px; line-height:1.4; color:var(--app-text);">${q.explanation}</div>
@@ -1037,7 +1042,7 @@ function renderMobileQuizView() {
       </div>
     `;
   }
-  
+
   // 2. 错题巩固本
   else {
     const wrongList = s.wrongQuestions || [];
@@ -1051,7 +1056,7 @@ function renderMobileQuizView() {
       `;
       return;
     }
-    
+
     let html = "";
     wrongList.forEach((q, idx) => {
       let optionsHtml = "";
@@ -1066,7 +1071,7 @@ function renderMobileQuizView() {
           </div>
         `;
       });
-      
+
       html += `
         <div class="quiz-card" style="position:relative; border-color:#fca5a5;">
           <span style="position:absolute; top:12px; right:12px; font-size:9px; background:#fee2e2; color:#ef4444; font-weight:800; padding:1px 5px; border-radius:3px;">错题集训</span>
@@ -1080,7 +1085,7 @@ function renderMobileQuizView() {
             <div class="mnemonic-box" style="font-size:12px; padding:6px; margin-top:4px;">
               ${q.mnemonicLink}
             </div>
-            
+
             <div style="display:flex; justify-content:flex-end; margin-top:6px;">
               <button class="btn-primary" style="padding:4px 10px; font-size:10px; background:#10b981;" onclick="removeWrongQuestion('${q.id}')">已经懂了，移出本子</button>
             </div>
@@ -1088,7 +1093,7 @@ function renderMobileQuizView() {
         </div>
       `;
     });
-    
+
     container.innerHTML = `
       <div style="font-size:11px; font-weight:800; color:#ef4444;">🚨 当前有 ${wrongList.length} 道题目在集训中，反复复习直到消灭它们：</div>
       <div style="display:flex; flex-direction:column; gap:14px;">
@@ -1103,15 +1108,15 @@ function submitMobileAnswer(questionId, selectedKey, element) {
   const quizzes = COURSE_DATA.quizzes[userState.activeSubjectId] || [];
   const qIndex = currentSubjState().quizDoneCount;
   const q = quizzes[qIndex];
-  
+
   if (!q) return;
-  
+
   // 禁用选项二次点击
   const items = document.querySelectorAll(".quiz-options .option-item");
   items.forEach(item => item.style.pointerEvents = "none");
-  
+
   const isCorrect = selectedKey === q.answer;
-  
+
   if (isCorrect) {
     element.classList.add("correct");
     showMobileToast("答对了！口诀非常管用");
@@ -1123,7 +1128,7 @@ function submitMobileAnswer(questionId, selectedKey, element) {
         item.classList.add("correct");
       }
     });
-    
+
     // 加入错题本
     const s = currentSubjState();
     if (!s.wrongQuestions.some(item => item.id === q.id)) {
@@ -1131,7 +1136,7 @@ function submitMobileAnswer(questionId, selectedKey, element) {
       saveState();
     }
   }
-  
+
   // 显示大白话解析
   const explainBox = document.getElementById("mobile-quiz-explain-box");
   if (explainBox) {
@@ -1172,17 +1177,17 @@ function addPointToEbbinghaus(pointId) {
   const s = currentSubjState();
   const kpList = COURSE_DATA.keyPoints[userState.activeSubjectId] || [];
   const kp = kpList.find(p => p.id === pointId);
-  
+
   if (!kp) return;
-  
+
   // 检查是否已在队列中
   if (s.ebbinghausQueue.some(item => item.id === pointId)) {
     showMobileToast("该口诀已在复盘计划中");
     return;
   }
-  
+
   const targetTime = Date.now() + REVIEW_DELAY_SECONDS * 1000;
-  
+
   s.ebbinghausQueue.push({
     id: kp.id,
     title: kp.title,
@@ -1190,10 +1195,10 @@ function addPointToEbbinghaus(pointId) {
     targetTime: targetTime, // 下次复盘激活时刻
     intervalCount: 1 // 复盘间隔递增档次
   });
-  
+
   saveState();
   renderAll();
-  
+
   showMobileToast("已加入智能复盘，30秒后将触发检测提示");
 }
 
@@ -1201,7 +1206,7 @@ function addPointToEbbinghaus(pointId) {
 function startEbbinghausTicker() {
   setInterval(() => {
     let hasAlert = false;
-    
+
     // 遍历所有科目检测是否有触发时间已到的复盘任务
     Object.keys(userState.subjectsState).forEach(subjId => {
       const state = userState.subjectsState[subjId];
@@ -1211,13 +1216,13 @@ function startEbbinghausTicker() {
         hasAlert = true;
       }
     });
-    
+
     // 更新手机端底部真题精练的红点提醒
     const alertBadge = document.getElementById("review-alert-badge");
     if (alertBadge) {
       alertBadge.style.display = hasAlert ? "block" : "none";
     }
-    
+
     updateEbbinghausWarningBanner();
   }, 1000);
 }
@@ -1226,11 +1231,11 @@ function startEbbinghausTicker() {
 function updateEbbinghausWarningBanner() {
   const container = document.getElementById("ebbinghaus-waiting-container");
   if (!container) return;
-  
+
   const s = currentSubjState();
   const now = Date.now();
   const readyItems = s.ebbinghausQueue.filter(item => now >= item.targetTime);
-  
+
   // 获取倒计时中最近的任务时间显示
   const pendingItems = s.ebbinghausQueue.filter(item => now < item.targetTime);
   let countdownText = "";
@@ -1238,7 +1243,7 @@ function updateEbbinghausWarningBanner() {
     const minDiff = Math.round((pendingItems[0].targetTime - now) / 1000);
     countdownText = `<div style="text-align:center; font-size:10px; color:var(--app-text-muted); font-weight:700;">🔄 复盘卡片倒计时中: ${minDiff}秒</div>`;
   }
-  
+
   if (readyItems.length > 0) {
     container.innerHTML = `
       <div class="review-waiting-banner">
@@ -1260,21 +1265,21 @@ function triggerEbbinghausActiveReviewPopup() {
   const s = currentSubjState();
   const now = Date.now();
   const readyItemIndex = s.ebbinghausQueue.findIndex(item => now >= item.targetTime);
-  
+
   if (readyItemIndex === -1) return;
-  
+
   const item = s.ebbinghausQueue[readyItemIndex];
   const kpList = COURSE_DATA.keyPoints[userState.activeSubjectId] || [];
   const kp = kpList.find(p => p.id === item.id);
-  
+
   if (!kp) return;
-  
+
   // 随机挖空口诀字，做口诀填空题
   // 高弹降价，低弹涨价 -> 高弹【】，低弹涨价
   const mStr = kp.mnemonic;
   let questionStr = mStr;
   let answerKeyword = "";
-  
+
   if (mStr.includes("降价")) {
     questionStr = mStr.replace("降价", "【 填空 】");
     answerKeyword = "降价";
@@ -1295,28 +1300,28 @@ function triggerEbbinghausActiveReviewPopup() {
       answerKeyword = mStr.substring(3);
     }
   }
-  
+
   // 弹出原生 prompt 让大龄考生复述口诀（降低复杂UI阻碍）
   const userInput = prompt(`🧠 艾宾浩斯复盘：请补齐该考点的口诀大字\n\n考点：${kp.title}\n口诀要求：${questionStr}\n\n请输入括号中挖掉的字词：`);
-  
+
   if (userInput === null) return; // 取消
-  
+
   if (userInput.trim() === answerKeyword) {
     alert("🎉 答对了！遗忘抗性翻倍，该口诀已被记忆引擎归档！");
-    
+
     // 从复盘队列中移除 (或升级为下一次更长的延时)
     s.ebbinghausQueue.splice(readyItemIndex, 1);
-    
+
     // 加入到已牢记
     if (!s.pointsChecked.includes(kp.id)) {
       s.pointsChecked.push(kp.id);
     }
-    
+
     saveState();
     renderAll();
   } else {
     alert(`❌ 记错了，正确答案是【${answerKeyword}】。口诀已在复盘队列中重置冷却时间，稍后会继续考你。`);
-    
+
     // 重置下一次检测时间
     item.targetTime = Date.now() + 15 * 1000; // 15秒后重新考
     saveState();
@@ -1333,28 +1338,28 @@ function triggerEbbinghausActiveReviewPopup() {
 function loadAudioTrack(trackId) {
   const tracks = COURSE_DATA.audios[userState.activeSubjectId] || [];
   const track = tracks.find(t => t.id === trackId);
-  
+
   if (!track) return;
-  
+
   // 如果点击的是当前正在放的，则直接触发暂停/播放切换
   if (activeAudioTrack && activeAudioTrack.id === trackId) {
     togglePlayPause();
     return;
   }
-  
+
   // 初始化新的音频文件播放
   stopAudioPlayer();
   activeAudioTrack = track;
-  
+
   const panel = document.getElementById("audio-player-panel");
   const trackTitle = document.getElementById("player-track-title");
-  
+
   if (panel) panel.classList.add("active");
   if (trackTitle) trackTitle.innerText = track.title;
-  
+
   // 加载歌词讲义列表
   renderSubtitlesWrapper(track.subtitles);
-  
+
   // 开始触发播放
   togglePlayPause();
   renderMobileAudioList();
@@ -1364,12 +1369,12 @@ function loadAudioTrack(trackId) {
 function renderSubtitlesWrapper(subtitles) {
   const container = document.getElementById("subtitles-wrapper");
   if (!container) return;
-  
+
   let html = "";
   subtitles.forEach((sub, idx) => {
     html += `<div class="sub-line" id="sub-line-${idx}" onclick="seekAudioTime(${sub.time}, ${idx})">${sub.text}</div>`;
   });
-  
+
   container.innerHTML = html;
   container.style.transform = `translateY(12px)`;
   currentSubtitleIndex = -1;
@@ -1378,10 +1383,10 @@ function renderSubtitlesWrapper(subtitles) {
 // 跳动到指定字幕时间点播放
 function seekAudioTime(time, index) {
   if (!activeAudioTrack || !isSpeechPlaying) return;
-  
+
   // 停止并跳转到对应台词播放
   window.speechSynthesis.cancel();
-  
+
   currentSubtitleIndex = index;
   speakCurrentSubtitle();
 }
@@ -1389,16 +1394,16 @@ function seekAudioTime(time, index) {
 // 切换播放与暂停
 function togglePlayPause() {
   if (!activeAudioTrack) return;
-  
+
   const playBtnIcon = document.getElementById("player-play-btn-icon");
   const visBars = document.querySelectorAll(".visualizer-container .vis-bar");
-  
+
   if (isSpeechPlaying) {
     // 暂停
     isSpeechPlaying = false;
     window.speechSynthesis.cancel();
     clearInterval(speechTimer);
-    
+
     if (playBtnIcon) playBtnIcon.innerText = "▶";
     visBars.forEach(b => b.classList.remove("animating"));
   } else {
@@ -1406,11 +1411,11 @@ function togglePlayPause() {
     isSpeechPlaying = true;
     if (playBtnIcon) playBtnIcon.innerText = "⏸️";
     visBars.forEach(b => b.classList.add("animating"));
-    
+
     if (currentSubtitleIndex === -1) {
       currentSubtitleIndex = 0;
     }
-    
+
     speakCurrentSubtitle();
   }
 }
@@ -1420,24 +1425,24 @@ let currentPlaybackRate = 1.0; // 默认倍速
 
 function speakCurrentSubtitle() {
   if (!activeAudioTrack || !isSpeechPlaying) return;
-  
+
   const subs = activeAudioTrack.subtitles;
   if (currentSubtitleIndex >= subs.length) {
     // 播放全部完成
     stopAudioPlayer();
     return;
   }
-  
+
   const currentSub = subs[currentSubtitleIndex];
-  
+
   // 1. 高亮并滚动到当前行
   highlightSubtitleLine(currentSubtitleIndex);
-  
+
   // 2. 调用浏览器自带语音合成
   speechUtterance = new SpeechSynthesisUtterance(currentSub.text);
   speechUtterance.lang = "zh-CN";
   speechUtterance.rate = currentPlaybackRate; // 大龄考生可调 0.8x 慢语速
-  
+
   // 在文字读完后自动滚动进入下一句
   speechUtterance.onend = () => {
     if (isSpeechPlaying) {
@@ -1445,14 +1450,14 @@ function speakCurrentSubtitle() {
       speakCurrentSubtitle();
     }
   };
-  
+
   speechUtterance.onerror = (e) => {
     console.warn("Speech synthesis ended or errored.", e);
   };
-  
+
   // 执行合成发音
   window.speechSynthesis.speak(speechUtterance);
-  
+
   // 3. 模拟进度条跑动
   updateProgressBarSimulated(currentSub.time);
 }
@@ -1461,12 +1466,12 @@ function speakCurrentSubtitle() {
 function highlightSubtitleLine(index) {
   const lines = document.querySelectorAll(".subtitles-scroller .sub-line");
   lines.forEach(l => l.classList.remove("highlight"));
-  
+
   const targetLine = document.getElementById(`sub-line-${index}`);
   if (targetLine) {
     targetLine.classList.add("highlight");
   }
-  
+
   const wrapper = document.getElementById("subtitles-wrapper");
   if (wrapper) {
     // 每行歌词高度为 22px，负位移向上滚动
@@ -1480,16 +1485,16 @@ function updateProgressBarSimulated(sec) {
   const fill = document.getElementById("player-progress-fill");
   const curTimeEl = document.getElementById("player-current-time");
   const totalTimeEl = document.getElementById("player-total-time");
-  
+
   if (!activeAudioTrack) return;
-  
+
   // 获取总播放时长
   const durParts = activeAudioTrack.duration.split(":");
   const totalSeconds = parseInt(durParts[0]) * 60 + parseInt(durParts[1]);
-  
+
   const percent = Math.min((sec / totalSeconds) * 100, 100);
   if (fill) fill.style.width = `${percent}%`;
-  
+
   // 格式化当前秒数
   const m = Math.floor(sec / 60).toString().padStart(2, '0');
   const s = (sec % 60).toString().padStart(2, '0');
@@ -1507,7 +1512,7 @@ function changePlaybackRate() {
     currentPlaybackRate = 1.0;
     if (rateBtn) rateBtn.innerText = "1.0x 正常";
   }
-  
+
   // 如果正在放，重新应用语速
   if (isSpeechPlaying) {
     window.speechSynthesis.cancel();
@@ -1522,16 +1527,16 @@ function stopAudioPlayer() {
   clearInterval(speechTimer);
   activeAudioTrack = null;
   currentSubtitleIndex = -1;
-  
+
   const panel = document.getElementById("audio-player-panel");
   if (panel) panel.classList.remove("active");
-  
+
   const playBtnIcon = document.getElementById("player-play-btn-icon");
   if (playBtnIcon) playBtnIcon.innerText = "▶";
-  
+
   const visBars = document.querySelectorAll(".visualizer-container .vis-bar");
   visBars.forEach(b => b.classList.remove("animating"));
-  
+
   // 刷新听记卡片列表播放状态
   renderMobileAudioList();
 }
@@ -1545,18 +1550,18 @@ function stopAudioPlayer() {
 function changeFontSize(sizeClass) {
   const container = document.getElementById("phone-screen-container");
   if (!container) return;
-  
+
   // 清除老字号Class
   container.classList.remove("font-normal", "font-medium", "font-large");
   container.classList.add(sizeClass);
-  
+
   userState.fontSizeClass = sizeClass;
   saveState();
-  
+
   // 菜单按钮高亮切换
   const btns = document.querySelectorAll(".size-selector .size-btn");
   btns.forEach(btn => btn.classList.remove("active"));
-  
+
   const activeIdx = sizeClass === "font-normal" ? 0 : (sizeClass === "font-medium" ? 1 : 2);
   btns[activeIdx].classList.add("active");
 }
@@ -1566,7 +1571,7 @@ function toggleEyeProtect() {
   const toggle = document.getElementById("eye-protect-toggle");
   const container = document.getElementById("phone-screen-container");
   if (!toggle || !container) return;
-  
+
   if (toggle.checked) {
     container.classList.add("eye-protect");
     userState.eyeProtectMode = true;
@@ -1574,7 +1579,7 @@ function toggleEyeProtect() {
     container.classList.remove("eye-protect");
     userState.eyeProtectMode = false;
   }
-  
+
   saveState();
 }
 
@@ -1582,12 +1587,12 @@ function toggleEyeProtect() {
 function renderMobileSettings() {
   const container = document.getElementById("phone-screen-container");
   const toggle = document.getElementById("eye-protect-toggle");
-  
+
   if (container) {
     container.classList.remove("font-normal", "font-medium", "font-large");
     container.classList.add(userState.fontSizeClass || "font-normal");
   }
-  
+
   if (toggle) {
     toggle.checked = userState.eyeProtectMode || false;
     if (userState.eyeProtectMode) {
@@ -1596,7 +1601,7 @@ function renderMobileSettings() {
       container?.classList.remove("eye-protect");
     }
   }
-  
+
   // 同步高亮字号切换按钮
   const btns = document.querySelectorAll(".size-selector .size-btn");
   if (btns.length === 3) {
@@ -1611,10 +1616,10 @@ function renderMobileSettings() {
 function showMobileToast(msg) {
   const toast = document.getElementById("mobile-toast");
   if (!toast) return;
-  
+
   toast.innerText = msg;
   toast.classList.add("show");
-  
+
   setTimeout(() => {
     toast.classList.remove("show");
   }, 2200);
@@ -1624,11 +1629,11 @@ function showMobileToast(msg) {
 function openWechatPopup(type) {
   const popup = document.getElementById("wechat-popup");
   if (!popup) return;
-  
+
   let title = "";
   let desc = "";
   let iconText = "";
-  
+
   if (type === 'group') {
     title = "慢慢记 - 大龄备考抱团学习群";
     desc = "与全国 28–45 岁同龄考友并肩作战，获取每日口诀打卡督导";
@@ -1638,12 +1643,12 @@ function openWechatPopup(type) {
     desc = "一对一制定备考计划，免费解锁大屏模考无限使用权益";
     iconText = "班主任微信";
   }
-  
+
   popup.innerHTML = `
     <div class="popup-card">
       <h4 style="font-weight:800; font-size:13.5px; color:var(--primary-3star);">${title}</h4>
       <p style="font-size:10px; color:var(--app-text-muted); line-height:1.4;">${desc}</p>
-      
+
       <div class="qr-code-placeholder">
         <svg class="qr-svg" viewBox="0 0 100 100">
           <!-- 绘制高保真演示维码图案 -->
@@ -1662,12 +1667,12 @@ function openWechatPopup(type) {
         </svg>
         <span style="font-size:8px; color:var(--app-text-muted); font-weight:700; margin-top:-2px;">[ 截图扫码添加 ]</span>
       </div>
-      
+
       <p style="font-size:9.5px; color:var(--primary-2star); font-weight:700;">班级口号：大龄备考不硬背，证书轻松过！</p>
       <button class="popup-close" onclick="closeWechatPopup()">关闭返回</button>
     </div>
   `;
-  
+
   popup.style.display = "flex";
 }
 
@@ -1683,13 +1688,13 @@ function closeWechatPopup() {
 window.addEventListener("DOMContentLoaded", () => {
   // 1. 初始化持久化状态
   initUserState();
-  
+
   // 2. 初始化科目联动
   changeGlobalSubject(userState.activeSubjectId);
-  
+
   // 3. 开启艾宾浩斯心跳轮询
   startEbbinghausTicker();
-  
+
   // 4. 重置一次大屏模考
   initMockExam();
 });

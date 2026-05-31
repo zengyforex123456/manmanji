@@ -427,7 +427,7 @@ body {
 }
 
 .cbt-nav-btn {
-  height: 36px;
+  height: 44px;
   border-radius: 4px;
   border: 1px solid var(--border-color);
   background: white;
@@ -547,7 +547,7 @@ body {
   display: flex;
   flex-direction: column;
   color: var(--app-text);
-  font-size: 13.5px;
+  font-size: 16px;
   user-select: none;
 }
 
@@ -1051,8 +1051,8 @@ body {
 }
 
 .audio-play-indicator {
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: var(--primary-3star);
   color: white;
@@ -1108,8 +1108,8 @@ body {
 }
 
 .player-btn {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1px solid var(--app-border);
   background: transparent;
@@ -1439,7 +1439,7 @@ body {
 .size-btn {
   border: none;
   background: transparent;
-  padding: 3px 8px;
+  padding: 12px 16px;
   font-size: 10px;
   font-weight: 700;
   border-radius: 3px;
@@ -1509,24 +1509,24 @@ input:checked + .slider:before {
 .font-medium {
   font-size: 15px !important;
 }
-.font-medium .kp-name { font-size: 16px !important; }
-.font-medium .mnemonic-box { font-size: 17px !important; }
-.font-medium .interpretation-box { font-size: 13.5px !important; }
-.font-medium .quiz-question { font-size: 15.5px !important; }
-.font-medium .option-item { font-size: 14px !important; padding: 12px 16px !important; }
-.font-medium .sub-line { font-size: 13px !important; height: 25px !important; }
-.font-medium .sub-line.highlight { font-size: 15px !important; }
+.font-medium .kp-name { font-size: 16px; }
+.font-medium .mnemonic-box { font-size: 17px; }
+.font-medium .interpretation-box { font-size: 13.5px; }
+.font-medium .quiz-question { font-size: 15.5px; }
+.font-medium .option-item { font-size: 14px; padding: 12px 16px !important; }
+.font-medium .sub-line { font-size: 13px; height: 25px !important; }
+.font-medium .sub-line.highlight { font-size: 15px; }
 
 .font-large {
   font-size: 17px !important;
 }
-.font-large .kp-name { font-size: 18px !important; }
-.font-large .mnemonic-box { font-size: 20px !important; padding: 12px !important; }
-.font-large .interpretation-box { font-size: 15px !important; }
-.font-large .quiz-question { font-size: 17.5px !important; }
-.font-large .option-item { font-size: 16px !important; padding: 14px 18px !important; }
-.font-large .sub-line { font-size: 15px !important; height: 28px !important; }
-.font-large .sub-line.highlight { font-size: 17.5px !important; }
+.font-large .kp-name { font-size: 18px; }
+.font-large .mnemonic-box { font-size: 20px; padding: 12px !important; }
+.font-large .interpretation-box { font-size: 15px; }
+.font-large .quiz-question { font-size: 17.5px; }
+.font-large .option-item { font-size: 16px; padding: 14px 18px !important; }
+.font-large .sub-line { font-size: 15px; height: 28px !important; }
+.font-large .sub-line.highlight { font-size: 17.5px; }
 
 /* 艾宾浩斯复盘清单待办样式 */
 .review-waiting-banner {
@@ -1547,8 +1547,8 @@ input:checked + .slider:before {
   background: #d97706;
   color: white;
   border: none;
-  padding: 3px 6px;
-  font-size: 9px;
+  padding: 8px 16px;
+  font-size: 16px;
   font-weight: 700;
   border-radius: 3px;
   cursor: pointer;
@@ -1947,7 +1947,7 @@ input:checked + .slider:before {
 }
 
 .membership-features li.disabled {
-  color: #cbd5e1;
+  color: #6b7280;
   text-decoration: line-through;
 }
 

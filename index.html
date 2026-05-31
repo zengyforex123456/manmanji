@@ -189,7 +189,7 @@
         
         <div style="display:flex; flex-direction:column; gap:1rem;">
           <div class="search-bar-wrapper">
-            <input type="text" id="pc-global-search-input" class="search-input" placeholder="输入关键词（如：弹性、折旧、教育、自决）..." oninput="triggerGlobalSearch(this.value)">
+            <input type="text" id="pc-global-search-input" class="search-input" placeholder="输入关键词（如：弹性、折旧、教育、自决）..." oninput="debouncedSearch(this.value)">
           </div>
           
           <div id="pc-search-results-stats" style="font-size:12px; color:var(--text-secondary); font-weight:700;">
