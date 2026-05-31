@@ -38,12 +38,29 @@ const sources = await parallel([
        Return: { feedback_comments: Array<{ pr_number: number, comment: string, author: string }>, count: number }`,
       { schema: { type: 'object', properties: { feedback_comments: { type: 'array', items: { type: 'object', properties: { pr_number: { type: 'number' }, comment: { type: 'string' }, author: { type: 'string' } }, required: ['comment'] } }, count: { type: 'number' } }, required: ['count'] } }
     )
+  },
+
+  // Local file input (if args is a filename)
+  async () => {
+    const inputFile = typeof args === 'string' ? args : null
+    if (!inputFile) return { items: [], count: 0 }
+    log(`Reading local feedback file: ${inputFile}`)
+    return await agent(
+      `Read the file "${inputFile}" in the project root. It contains user requirements/feedback in Chinese.
+       Parse it into structured feedback items. Each section or bullet point is one item.
+       For each item, extract: the requirement description, implied category, and any acceptance criteria mentioned.
+
+       File to read: ${inputFile}
+
+       Return: { items: Array<{ title: string, body: string, category_hint: string }>, count: number }`,
+      { schema: { type: 'object', properties: { items: { type: 'array', items: { type: 'object', properties: { title: { type: 'string' }, body: { type: 'string' }, category_hint: { type: 'string' } }, required: ['title', 'body'] } }, count: { type: 'number' } }, required: ['count'] } }
+    )
   }
 ])
 
-const [issues, prFeedback] = sources.filter(Boolean)
-const totalFeedback = (issues?.count || 0) + (prFeedback?.count || 0)
-log(`Collected: ${issues?.count || 0} issues + ${prFeedback?.count || 0} PR comments = ${totalFeedback} total`)
+const [issues, prFeedback, localFile] = sources.filter(Boolean)
+const totalFeedback = (issues?.count || 0) + (prFeedback?.count || 0) + (localFile?.count || 0)
+log(`Collected: ${issues?.count || 0} issues + ${prFeedback?.count || 0} PR comments + ${localFile?.count || 0} local = ${totalFeedback} total`)
 
 if (totalFeedback === 0) {
   log('No new feedback to process.')
@@ -65,13 +82,13 @@ if (issues?.issues) {
     created_at: i.created_at
   }))
 }
-if (prFeedback?.feedback_comments) {
-  prFeedback.feedback_comments.forEach(c => allItems.push({
-    source: `pr_comment_#${c.pr_number}`,
-    raw_title: c.comment.substring(0, 100),
-    raw_body: c.comment,
+if (localFile?.items) {
+  localFile.items.forEach(i => allItems.push({
+    source: 'local_file',
+    raw_title: i.title,
+    raw_body: i.body || '',
     labels: [],
-    created_at: ''
+    created_at: new Date().toISOString()
   }))
 }
 

@@ -67,23 +67,4 @@
 •兼容需求：适配全型号手机、电脑、全版本微信，自适应大屏/小屏显示
 •体验需求：全站风格统一、操作逻辑统一、内容讲解风格统一，无品类割裂感
 
-wsl中配置deepseek 模型
-
-export ANTHROPIC_BASE_URL="https://api.deepseek.com/anthropic"
-export ANTHROPIC_AUTH_TOKEN="sk-704205838d5d439783ed5af4d6165d3c"
-export ANTHROPIC_MODEL="deepseek-v4-pro[1m]"
-export ANTHROPIC_DEFAULT_OPUS_MODEL="deepseek-v4-pro[1m]"
-export ANTHROPIC_DEFAULT_SONNET_MODEL="deepseek-v4-pro[1m]"
-export ANTHROPIC_DEFAULT_HAIKU_MODEL="deepseek-v4-flash"
-export CLAUDE_CODE_SUBAGENT_MODEL="deepseek-v4-flash"
-export CLAUDE_CODE_EFFORT_LEVEL="max"
-
-echo '# Claude Code with DeepSeek' >> ~/.bashrc
-echo 'export ANTHROPIC_BASE_URL="https://api.deepseek.com/anthropic"' >> ~/.bashrc
-echo 'export ANTHROPIC_AUTH_TOKEN="sk-704205838d5d439783ed5af4d6165d3c"' >> ~/.bashrc
-echo 'export ANTHROPIC_MODEL="deepseek-v4-pro[1m]"' >> ~/.bashrc
-echo 'export ANTHROPIC_DEFAULT_OPUS_MODEL="deepseek-v4-pro[1m]"' >> ~/.bashrc
-echo 'export ANTHROPIC_DEFAULT_SONNET_MODEL="deepseek-v4-pro[1m]"' >> ~/.bashrc
-echo 'export ANTHROPIC_DEFAULT_HAIKU_MODEL="deepseek-v4-flash"' >> ~/.bashrc
-echo 'export CLAUDE_CODE_SUBAGENT_MODEL="deepseek-v4-flash"' >> ~/.bashrc
-echo 'export CLAUDE_CODE_EFFORT_LEVEL="max"' >> ~/.bashrc
+(API 配置已移至 .claude/settings.local.json — 请勿在文档中存储密钥)
