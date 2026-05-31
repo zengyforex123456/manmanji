@@ -1,0 +1,227 @@
+# SDLC Pipeline — P2 → P3 → P4 → P5
+# Triggered on feature/fix branch push and PR to main
+
+name: SDLC Pipeline
+
+on:
+  push:
+    branches: [feature/**, fix/**, refactor/**, docs/**, test/**]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: 'Run specific phase only'
+        required: false
+        type: choice
+        options: [all, p2, p3, p4, p5]
+        default: all
+
+env:
+  ANTHROPIC_MODEL: deepseek-v4-pro
+
+jobs:
+  # ============================================================
+  # P2: Code Quality Gate
+  # ============================================================
+  p2-code-quality:
+    runs-on: ubuntu-latest
+    outputs:
+      p2_passed: ${{ steps.claude.outputs.exit_code == 0 }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install project dependencies
+        run: |
+          if [ -f package.json ]; then
+            npm install --no-audit --no-fund
+          fi
+
+      - name: Run linter (if configured)
+        id: lint
+        continue-on-error: true
+        run: |
+          if [ -f package.json ]; then
+            if grep -q '"eslint"' package.json || grep -q '"lint"' package.json; then
+              npm run lint 2>&1 || echo "LINT_FAILED=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "No linter configured — skip"
+            fi
+          fi
+
+      - name: Run typecheck (if configured)
+        id: typecheck
+        continue-on-error: true
+        run: |
+          if [ -f tsconfig.json ]; then
+            npx tsc --noEmit 2>&1 || echo "TYPECHECK_FAILED=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No TypeScript config — skip"
+          fi
+
+      - name: Claude Code — P2 Code Review
+        id: claude
+        continue-on-error: true
+        env:
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.ANTHROPIC_AUTH_TOKEN }}
+          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+        run: |
+          bash scripts/ci/claude-ci-runner.sh p2-code-review
+
+      - name: Update P2 Gate Status
+        if: always()
+        run: |
+          echo "P2 lint: ${{ steps.lint.outcome }}"
+          echo "P2 typecheck: ${{ steps.typecheck.outcome }}"
+          echo "P2 review: ${{ steps.claude.outcome }}"
+
+  # ============================================================
+  # P3: Test Verification Gate
+  # ============================================================
+  p3-test:
+    needs: p2-code-quality
+    runs-on: ubuntu-latest
+    outputs:
+      p3_passed: ${{ steps.claude.outputs.exit_code == 0 && steps.test.outcome == 'success' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install project dependencies
+        run: |
+          if [ -f package.json ]; then
+            npm install --no-audit --no-fund
+          fi
+
+      - name: Run tests with coverage
+        id: test
+        continue-on-error: true
+        run: |
+          if [ -f package.json ]; then
+            if grep -q '"jest"' package.json; then
+              npx jest --coverage --coverageReporters=text 2>&1
+            elif grep -q '"vitest"' package.json; then
+              npx vitest run --coverage 2>&1
+            elif grep -q '"test"' package.json; then
+              npm test 2>&1
+            else
+              echo "No test framework detected — skip"
+            fi
+          fi
+
+      - name: Claude Code — P3 Test Verification
+        id: claude
+        continue-on-error: true
+        env:
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.ANTHROPIC_AUTH_TOKEN }}
+          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+        run: |
+          bash scripts/ci/claude-ci-runner.sh p3-test-verify
+
+  # ============================================================
+  # P4: Comprehensive Review Gate
+  # ============================================================
+  p4-review:
+    needs: p3-test
+    runs-on: ubuntu-latest
+    outputs:
+      p4_passed: ${{ steps.claude.outputs.exit_code == 0 }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Claude Code — P4 Comprehensive Review
+        id: claude
+        env:
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.ANTHROPIC_AUTH_TOKEN }}
+          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+        run: |
+          bash scripts/ci/claude-ci-runner.sh p4-comprehensive-review
+
+      - name: Upload review report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p4-review-report
+          path: ci-reports/
+
+  # ============================================================
+  # P5: Deploy Readiness Gate (main branch only)
+  # ============================================================
+  p5-deploy:
+    needs: p4-review
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Claude Code — P5 Deploy Checklist
+        id: claude
+        env:
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.ANTHROPIC_AUTH_TOKEN }}
+          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+        run: |
+          bash scripts/ci/claude-ci-runner.sh p5-deploy-checklist
+
+      - name: Generate deploy summary
+        if: always()
+        run: |
+          echo "## Deploy Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "**P2 Code Quality**: ${{ needs.p2-code-quality.result }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "**P3 Test Verification**: ${{ needs.p3-test.result }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "**P4 Review**: ${{ needs.p4-review.result }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "**P5 Deploy**: ${{ steps.claude.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+
+  # ============================================================
+  # Final Gate Summary
+  # ============================================================
+  gate-summary:
+    needs: [p2-code-quality, p3-test, p4-review, p5-deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compile gate status
+        run: |
+          echo "## SDLC Quality Gates" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Gate | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|------|--------|" >> "$GITHUB_STEP_SUMMARY"
+
+          declare -A gates
+          gates[P2]=${{ needs.p2-code-quality.result }}
+          gates[P3]=${{ needs.p3-test.result }}
+          gates[P4]=${{ needs.p4-review.result }}
+          gates[P5]=${{ needs.p5-deploy.result }}
+
+          all_passed=true
+          for gate in P2 P3 P4 P5; do
+            status="${gates[$gate]}"
+            if [ "$status" == "success" ]; then
+              echo "| $gate | PASS |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "| $gate | FAIL ($status) |" >> "$GITHUB_STEP_SUMMARY"
+              all_passed=false
+            fi
+          done
+
+          if [ "$all_passed" == "true" ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo ":white_check_mark: **ALL GATES PASSED** — Ready for production." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo ":x: **SOME GATES FAILED** — Fix before deploying." >> "$GITHUB_STEP_SUMMARY"
+          fi

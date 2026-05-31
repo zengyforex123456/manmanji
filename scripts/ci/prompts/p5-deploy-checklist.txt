@@ -1,0 +1,32 @@
+执行 P5 部署检查。以 READY 或 NOT_READY 作为报告第一行。
+
+## 步骤
+
+1. 验证前置门禁（从 ci-reports/ 目录读取）：
+   - P2 编码审查: PASS?
+   - P3 测试验证: PASS?
+   - P4 综合审查: PASS?
+2. 检查 Git 状态：
+   - 无未提交的变更
+   - 当前分支是最新的
+3. 构建检查：
+   - 项目能否成功构建（如果有构建步骤）
+4. 生成 CHANGELOG 摘要：
+   - 列出本次发布包含的变更
+   - 标注 breaking changes（如果有）
+
+## 输出格式
+
+```
+READY 或 NOT_READY
+- P2 Gate: PASS/FAIL
+- P3 Gate: PASS/FAIL
+- P4 Gate: PASS/FAIL
+- Git: CLEAN/DIRTY
+- Build: PASS/FAIL/不适用
+
+Changlog:
+- （变更摘要列表）
+
+如果 NOT_READY，列出需要修复的项目。
+```

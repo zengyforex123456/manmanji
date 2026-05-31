@@ -1,0 +1,72 @@
+# Scheduled Security Scan
+# Runs daily at 9:00 UTC + on-demand
+
+name: Security Scan
+
+on:
+  schedule:
+    - cron: '0 9 * * *'   # Daily at 9:00 UTC
+  workflow_dispatch:       # Manual trigger
+
+env:
+  ANTHROPIC_MODEL: deepseek-v4-pro
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          if [ -f package.json ]; then
+            npm install --no-audit --no-fund
+          fi
+
+      - name: npm audit
+        id: audit
+        continue-on-error: true
+        run: |
+          if [ -f package.json ]; then
+            npm audit --json > audit-report.json 2>&1 || true
+            if [ -f audit-report.json ]; then
+              critical=$(jq '.metadata.vulnerabilities.critical // 0' audit-report.json)
+              high=$(jq '.metadata.vulnerabilities.high // 0' audit-report.json)
+              echo "critical=$critical" >> "$GITHUB_OUTPUT"
+              echo "high=$high" >> "$GITHUB_OUTPUT"
+
+              if [ "$critical" -gt 0 ] || [ "$high" -gt 0 ]; then
+                echo "VULNERABILITIES FOUND: $critical critical, $high high"
+                jq '.vulnerabilities' audit-report.json
+              else
+                echo "No high or critical vulnerabilities."
+              fi
+            fi
+          fi
+
+      - name: Claude Code — Security Deep Review
+        if: steps.audit.outputs.critical != '0' || steps.audit.outputs.high != '0'
+        env:
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.ANTHROPIC_AUTH_TOKEN }}
+          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+        run: |
+          bash scripts/ci/claude-ci-runner.sh p4-comprehensive-review
+
+      - name: Create issue if vulnerabilities found
+        if: steps.audit.outputs.critical != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const critical = '${{ steps.audit.outputs.critical }}';
+            const high = '${{ steps.audit.outputs.high }}';
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[SECURITY] ${critical} critical, ${high} high vulnerabilities found`,
+              body: `Security scan found:\n- ${critical} critical\n- ${high} high\n\nSee audit log: ${process.env.GITHUB_SERVER_URL}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              labels: ['security', 'priority']
+            });

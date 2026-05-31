@@ -1,0 +1,30 @@
+执行 P2 编码审查。以 PASS 或 FAIL 作为报告第一行。
+
+## 步骤
+
+1. 读取 .claude/project-state.json 了解当前项目阶段和配置
+2. 检查本次变更的所有文件（git diff origin/main...HEAD）
+3. 逐条对照 CLAUDE.md 中的编码规范：
+   - 函数体 ≤ 50 行
+   - 嵌套层级 ≤ 3 层
+   - 函数参数 ≤ 4 个
+   - 无 SQL 注入、XSS、硬编码密钥
+4. 如果涉及 UI 代码，检查：
+   - 无 float 布局 / table 布局
+   - 交互元素 ≥ 44x44px
+   - 对比度 ≥ 4.5:1
+   - 无内联 style、无 !important
+5. 如果发现 PRD 文件中未列出的功能，标记为「PRD 外」
+
+## 输出格式
+
+```
+PASS 或 FAIL
+- Lint: （如果有）通过/失败（X errors）
+- TypeCheck: （如果有）通过/失败
+- 编码规范: 通过/失败
+- 安全: 通过/失败
+- PRD 符合性: 通过/失败
+
+如果 FAIL，列出具体问题文件和行号。
+```
