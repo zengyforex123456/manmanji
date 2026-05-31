@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npm test *)",
+      "Bash(npx eslint *)",
+      "Bash(npx tsc *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Edit(src/**)",
+      "Edit(app.js)",
+      "Edit(app.css)",
+      "Edit(data.js)",
+      "Edit(index.html)",
+      "Write(docs/artifacts/**)",
+      "Write(scratch/**)",
+      "Read(**)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force *)",
+      "Bash(git reset --hard *)",
+      "Read(.env)",
+      "Read(*credentials*)",
+      "Read(*secret*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -Command \"if (Test-Path 'd:\\project\\kaoshi\\.claude\\hooks\\check-diff.ps1') { & 'd:\\project\\kaoshi\\.claude\\hooks\\check-diff.ps1' }\""
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,49 @@
+﻿{
+    "key_context":  "",
+    "modified_files":  [
+
+                       ],
+    "prd_file":  null,
+    "completed_tasks":  [
+
+                        ],
+    "architecture":  [
+
+                     ],
+    "phase_history":  [
+
+                      ],
+    "quality_gates":  {
+                          "P1":  {
+                                     "architecture_confirmed":  false,
+                                     "design_confirmed":  false,
+                                     "prd_confirmed":  false,
+                                     "requirements_confirmed":  false,
+                                     "tech_stack_confirmed":  false
+                                 },
+                          "P4":  {
+                                     "review_pass":  false,
+                                     "prd_traceability_pass":  false,
+                                     "integration_consistency_pass":  false
+                                 },
+                          "P2":  {
+                                     "typecheck_pass":  false,
+                                     "security_audit_pass":  false,
+                                     "lint_pass":  false,
+                                     "build_pass":  false
+                                 },
+                          "P5":  {
+                                     "monitoring_ready":  false,
+                                     "deploy_checklist_pass":  false,
+                                     "rollback_plan_ready":  false
+                                 },
+                          "P3":  {
+                                     "unit_test_pass":  false,
+                                     "accessibility_pass":  false,
+                                     "coverage_branch_pct":  0,
+                                     "ui_test_pass":  false,
+                                     "coverage_line_pct":  0
+                                 }
+                      },
+    "current_phase":  "P1"
+}

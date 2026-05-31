@@ -1,0 +1,32 @@
+# 临时文件
+/scratch/
+*.log
+*.tmp
+
+# 依赖
+/node_modules/
+/dist/
+/build/
+
+# 敏感信息
+.env
+.env.*
+credentials*
+*secret*
+*-credentials.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code (部分)
+.claude/scheduled_tasks.lock
+.claude/debug/
+.claude/sessions/
+.claude/cache/

@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>慢慢记 - 大龄考生全职业考试通用备考系统</title>
+  <!-- 引入 Google Fonts 提升排版档次 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <!-- 引入全局样式 -->
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- ===================================================
+         1. 左侧：备考控制中心侧边栏 (PC Sidebar)
+         =================================================== -->
+    <div class="pc-sidebar">
+      <div style="display:flex; flex-direction:column; gap:1.5rem;">
+        <!-- 品牌标识 -->
+        <div class="sidebar-brand">
+          <div class="sidebar-logo">慢</div>
+          <div class="sidebar-title">
+            <h1>慢慢记</h1>
+            <p>大龄考生专属备考系统</p>
+          </div>
+        </div>
+        
+        <!-- 侧边导航栏 -->
+        <div class="sidebar-menu">
+          <div class="menu-item active" onclick="switchPCView('landing', this)">
+            <i>🏠</i><span>官网首页</span>
+          </div>
+          <div class="menu-item" onclick="switchPCView('dashboard', this)">
+            <i>📈</i><span>多科目备考看板</span>
+          </div>
+          <div class="menu-item" onclick="switchPCView('search', this)">
+            <i>🔍</i><span>全站考点搜索</span>
+          </div>
+          <div class="menu-item" onclick="switchPCView('download', this)">
+            <i>📥</i><span>备考资料下载</span>
+          </div>
+          <div class="menu-item" onclick="switchPCView('mock', this)">
+            <i>📝</i><span>电脑全真模考</span>
+          </div>
+          <div class="menu-item" onclick="switchPCView('membership', this)">
+            <i>👑</i><span>会员权益中心</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 底部版权或口号 -->
+      <div style="padding:0.5rem; font-size:0.75rem; color:#475569; border-top:1px solid #1e293b; line-height:1.5;">
+        🎯 口号：大龄备考不硬背，职场证书轻松过。
+      </div>
+    </div>
+    
+    <!-- ===================================================
+         2. 中间：网页端多功能学习工作台 (PC Workstation)
+         =================================================== -->
+    <div class="pc-portal">
+      
+      <!-- Top header with Subject Switcher -->
+      <div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 20px; border-radius: var(--radius-md); border:1px solid #cbd5e1; box-shadow: var(--shadow-sm);">
+        <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary);">
+          当前正在备考科目:
+        </div>
+        <div class="subject-selector-box">
+          <span>📚</span>
+          <select id="pc-subject-selector" class="subject-select" onchange="changeGlobalSubject(this.value)">
+            <option value="econ">中级经济师</option>
+            <option value="accounting">中级会计师</option>
+            <option value="teacher">教师资格证</option>
+            <option value="social">社会工作者</option>
+            <option value="construct">二级建造师</option>
+            <option value="hr">人力资源管理师</option>
+            <option value="tax">税务师</option>
+            <option value="acc_junior">初级会计师</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- ================= VIEW 2.0: 官网首页 Landing Page ================= -->
+      <div class="pc-view-panel active" id="pc-view-landing">
+        <!-- Hero Banner -->
+        <div class="landing-hero">
+          <div class="hero-glow"></div>
+          <div class="hero-content">
+            <div class="hero-badge">🎯 国内首个大龄考生专属备考平台</div>
+            <h1 class="hero-title">大龄备考不硬背<br><span>职场证书轻松过</span></h1>
+            <p class="hero-desc">专为28-45岁职场人打造 · 口诀记忆 · 碎片学习 · 智能复盘 · 极简通关</p>
+            <div class="hero-stats-row">
+              <div class="hero-stat"><strong id="landing-total-subjects">8</strong><span>考试品类</span></div>
+              <div class="hero-stat"><strong>5-10</strong><span>分钟碎片学</span></div>
+              <div class="hero-stat"><strong>80%</strong><span>高分考点覆盖</span></div>
+              <div class="hero-stat"><strong>0</strong><span>广告弹窗</span></div>
+            </div>
+            <button class="hero-cta" onclick="switchPCView('dashboard')">立即开始备考 ➜</button>
+          </div>
+        </div>
+
+        <!-- 全品类考试赛道入口 -->
+        <div style="margin-top:1.5rem;">
+          <h3 style="font-weight:800; font-size:1.1rem; border-left:4px solid var(--accent); padding-left:8px; margin-bottom:0.75rem;">📚 全品类职业考试赛道 (点击进入备考)</h3>
+          <div class="landing-category-grid" id="landing-category-grid">
+            <!-- 动态渲染科目入口卡片 -->
+          </div>
+        </div>
+
+        <!-- 核心优势 -->
+        <div style="margin-top:1.5rem;">
+          <h3 style="font-weight:800; font-size:1.1rem; border-left:4px solid var(--accent); padding-left:8px; margin-bottom:0.75rem;">💡 为什么大龄考生都选慢慢记？</h3>
+          <div class="landing-features-grid">
+            <div class="feature-card">
+              <div class="feature-icon">🧠</div>
+              <h4>口诀记忆法</h4>
+              <p>所有考点压缩为4-8字口诀，告别死记硬背，像顺口溜一样好记</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">⏱️</div>
+              <h4>碎片化学习</h4>
+              <p>每次只需5-10分钟，通勤、带娃、摸鱼间隙轻松完成每日任务</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🔄</div>
+              <h4>智能复盘引擎</h4>
+              <p>艾宾浩斯遗忘曲线算法全自动推送复习，系统帮你对抗遗忘</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">✂️</div>
+              <h4>精简60%内容</h4>
+              <p>删除冷门废考点，只保留80%得分必考内容，备考效率翻倍</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">👁️</div>
+              <h4>大龄友好界面</h4>
+              <p>大字护眼、零广告、操作不超两步，像用微信一样简单</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">💬</div>
+              <h4>大白话解读</h4>
+              <p>所有专业术语通俗翻译，用生活案例讲解，一听就懂不走神</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= VIEW 2.1: 多科目备考看板 & 教研管理 ================= -->
+      <div class="pc-view-panel" id="pc-view-dashboard">
+        
+        <!-- 全科目学习状态大看板 -->
+        <h3 style="font-weight:800; font-size:1.1rem; border-left:4px solid var(--accent); padding-left:8px; margin-bottom:0.5rem;">📊 多科目并行备考看板 (点击可即时切换主备考)</h3>
+        <div class="subject-parallel-grid" id="pc-parallel-subjects-grid">
+          <!-- 动态渲染 5 个科目的状态卡 -->
+        </div>
+        
+        <!-- 教研内容同步管理面板 -->
+        <div class="pc-content-section" style="margin-top:1rem;">
+          <div class="section-title">
+            <span id="editor-title-subject">中级经济师 - 教研讲义与口诀大纲 (即时同步至Mobile端)</span>
+            <div class="tab-btn-group">
+              <button class="tab-btn active">核心必考</button>
+              <button class="tab-btn" onclick="alert('专业细分内容已加载在默认数据库，编辑主科口诀即可生效。')">教研手册</button>
+            </div>
+          </div>
+          
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.8rem; color: #15803d; line-height: 1.5;">
+            💡 <strong>实时教研同步：</strong> 您可以在下方表格中点击“编辑口诀”或解读。修改保存后，右侧手机小程序仿真器对应的【考点速记营】、【艾宾浩斯智能复盘】以及【真题解析】中的口诀都会<strong>秒级同步更新</strong>！
+          </div>
+          
+          <!-- PC端当前科目知识点列表 -->
+          <div class="pc-list-container" id="pc-points-list">
+            <!-- 动态加载 data.js 里的当前科目考点 -->
+          </div>
+        </div>
+      </div>
+      
+      <!-- ================= VIEW 2.2: 全站考点搜索 ================= -->
+      <div class="pc-view-panel" id="pc-view-search">
+        <div class="pc-view-header">
+          <div class="pc-view-title">
+            <h2>全站考点精准搜索</h2>
+            <p>支持跨科目检索核心专业名词、口诀、大白话解读</p>
+          </div>
+        </div>
+        
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+          <div class="search-bar-wrapper">
+            <input type="text" id="pc-global-search-input" class="search-input" placeholder="输入关键词（如：弹性、折旧、教育、自决）..." oninput="triggerGlobalSearch(this.value)">
+          </div>
+          
+          <div id="pc-search-results-stats" style="font-size:12px; color:var(--text-secondary); font-weight:700;">
+            输入关键词开始检索全科目备考数据库...
+          </div>
+          
+          <div class="search-results-list" id="pc-search-results-container">
+            <!-- 动态填充搜索卡片 -->
+          </div>
+        </div>
+      </div>
+      
+      <!-- ================= VIEW 2.3: 备考资料批量下载 ================= -->
+      <div class="pc-view-panel" id="pc-view-download">
+        <div class="pc-view-header">
+          <div class="pc-view-title">
+            <h2>备考资料批量下载 (PC端专属)</h2>
+            <p>大字版电子讲义、口诀速记卡片、思维导图批量打包下载，适配大字打印</p>
+          </div>
+        </div>
+        
+        <div class="download-grid">
+          <div class="download-card">
+            <div class="download-icon">📄</div>
+            <div class="download-title">《慢慢记-核心口诀大字速记本.pdf》</div>
+            <div style="font-size:11px; color:var(--text-secondary);">大小: 2.4 MB | 大龄护眼超大字体排版</div>
+            <div class="download-progress-container" id="progress-container-1">
+              <div class="download-progress-bar" id="progress-bar-1"></div>
+            </div>
+            <button class="btn-primary" onclick="simulateDownload(1, '慢慢记-核心口诀大字速记本.pdf')">打包下载</button>
+          </div>
+          
+          <div class="download-card">
+            <div class="download-icon">📘</div>
+            <div class="download-title">《慢慢记-高频真题白话解析手册.docx》</div>
+            <div style="font-size:11px; color:var(--text-secondary);">大小: 4.8 MB | 精选5年真题去废题白话解析</div>
+            <div class="download-progress-container" id="progress-container-2">
+              <div class="download-progress-bar" id="progress-bar-2"></div>
+            </div>
+            <button class="btn-primary" onclick="simulateDownload(2, '慢慢记-高频真题白话解析手册.docx')">打包下载</button>
+          </div>
+          
+          <div class="download-card">
+            <div class="download-icon">🗂️</div>
+            <div class="download-title">《慢慢记-全科目逻辑对比思维图.zip》</div>
+            <div style="font-size:11px; color:var(--text-secondary);">大小: 12.6 MB | 左右对比防混结构化大图</div>
+            <div class="download-progress-container" id="progress-container-3">
+              <div class="download-progress-bar" id="progress-bar-3"></div>
+            </div>
+            <button class="btn-primary" onclick="simulateDownload(3, '慢慢记-全科目逻辑对比思维图.zip')">打包下载</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ================= VIEW 2.4: 电脑大屏全真模考 ================= -->
+      <div class="pc-view-panel" id="pc-view-mock">
+        <div class="pc-view-header">
+          <div class="pc-view-title">
+            <h2 id="mock-exam-subject-title">中级经济师 - 大屏全真无焦虑机考模拟</h2>
+            <p>1:1还原官方机考做题模式，自动剔除偏题难题，大字不累眼</p>
+          </div>
+          <div style="font-weight:800; font-size:1.1rem; color:#dc2626; display:flex; align-items:center; gap:6px;">
+            <span>⏱️ 剩余时间:</span>
+            <span id="mock-timer">45:00</span>
+          </div>
+        </div>
+        
+        <div class="cbt-container">
+          <!-- 题号导航 -->
+          <div class="cbt-navigator">
+            <div>
+              <div style="font-weight:700; font-size:12px; color:var(--text-secondary); margin-bottom:8px;">题号导航面板</div>
+              <div class="cbt-nav-grid" id="mock-question-nav">
+                <!-- 动态渲染题号 -->
+              </div>
+            </div>
+            <div>
+              <button class="btn-primary" style="width:100%; font-weight:800; background:#dc2626;" onclick="submitMockExam()">提交考卷并查看解析</button>
+            </div>
+          </div>
+          
+          <!-- 答题区 -->
+          <div class="cbt-question-pane" id="mock-question-body-container">
+            <!-- 动态渲染当前考题内容 -->
+          </div>
+        </div>
+      </div>
+      
+      <!-- ================= VIEW 2.5: 会员权益中心 ================= -->
+      <div class="pc-view-panel" id="pc-view-membership">
+        <div class="pc-view-header">
+          <div class="pc-view-title">
+            <h2>👑 会员权益中心</h2>
+            <p>「免费试用 + 单科会员 + 全站通卡」三级权益体系，灵活适配你的备考需求</p>
+          </div>
+        </div>
+        <div class="membership-grid" id="membership-pricing-grid">
+          <!-- 动态渲染会员卡片 -->
+        </div>
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px 16px; border-radius:var(--radius-md); font-size:0.85rem; color:#15803d; line-height:1.5; margin-top:0.5rem;">
+          💡 <strong>温馨提示：</strong>当前为演示模式，已默认开启「全站通用年度通卡」权限。正式版本将接入微信支付，支持在线开通会员。所有学习数据、会员权益三端（PC/H5/小程序）实时同步。
+        </div>
+      </div>
+      
+    </div>
+    
+    <!-- ===================================================
+         3. 右侧：慢慢记微信小程序仿真器 (Mobile Emulator)
+         =================================================== -->
+    <div class="phone-column">
+      
+      <div class="smartphone-shell">
+        <!-- 手机屏幕 -->
+        <div class="phone-screen no-scrollbar font-normal" id="phone-screen-container">
+          
+          <!-- 3.1 状态栏 -->
+          <div class="phone-status-bar">
+            <span>23:28</span>
+            <div class="status-right">
+              <span style="letter-spacing:1px; font-size:9px;">📶 5G</span>
+              <div class="status-battery">
+                <div class="status-battery-level"></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 3.2 小程序顶部导航栏 -->
+          <div class="mini-prog-header">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:10px; cursor:pointer;" onclick="switchTab('home')">🏠</span>
+              <span class="mini-prog-title" id="m-header-prog-title">慢慢记 - 大龄经济师备考</span>
+            </div>
+            <div class="mini-prog-actions">
+              <div class="bullet-dot"></div>
+              <div class="bullet-ring"></div>
+            </div>
+          </div>
+          
+          <!-- 3.3 小程序滚动内容区 -->
+          <div class="app-content no-scrollbar">
+            
+            <!-- 艾宾浩斯智能复盘通知挂件 (自动浮现) -->
+            <div id="ebbinghaus-waiting-container" style="display:none; transition: all 0.3s ease;">
+              <!-- 动态填充待复盘横幅 -->
+            </div>
+            
+            <!-- ================= TAB 1: 首页速学 ================= -->
+            <div class="app-view active" id="app-view-home">
+              <!-- Banner -->
+              <div class="app-banner">
+                <div class="banner-quote">“不用死背书，大龄轻松过”</div>
+                <div class="banner-sub">💡 慢慢记帮你克服遗忘，只记高频考点。</div>
+              </div>
+              
+              <!-- 快捷入口 -->
+              <div class="app-shortcut-grid">
+                <div class="shortcut-item" onclick="switchTab('camp')">
+                  <div class="shortcut-icon sc1">📝</div>
+                  <div class="shortcut-text">
+                    <h3>今日必记</h3>
+                    <p>核心必考口诀</p>
+                  </div>
+                </div>
+                <div class="shortcut-item" onclick="switchTab('audio')">
+                  <div class="shortcut-icon sc2">🎧</div>
+                  <div class="shortcut-text">
+                    <h3>碎片听学</h3>
+                    <p>做家务听考点</p>
+                  </div>
+                </div>
+                <div class="shortcut-item" onclick="switchTab('quiz')">
+                  <div class="shortcut-icon sc3">✍️</div>
+                  <div class="shortcut-text">
+                    <h3>真题速刷</h3>
+                    <p>精简高频真题</p>
+                  </div>
+                </div>
+                <div class="shortcut-item" onclick="switchQuizSubTab('mistake'); switchTab('quiz')">
+                  <div class="shortcut-icon sc4">📖</div>
+                  <div class="shortcut-text">
+                    <h3>错题复盘</h3>
+                    <p>搞懂错题库</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 学习数据看板 -->
+              <div class="app-stats-card">
+                <div class="app-stat-item">
+                  <h4 id="m-stats-days">3</h4>
+                  <p>备考天数</p>
+                </div>
+                <div class="app-stat-item" style="border-left: 1px solid var(--app-border); border-right: 1px solid var(--app-border); padding: 0 12px;">
+                  <h4 id="m-stats-points">0</h4>
+                  <p>已掌握考点</p>
+                </div>
+                <div class="app-stat-item">
+                  <h4 id="m-stats-wrong">0</h4>
+                  <p>错题数量</p>
+                </div>
+              </div>
+              
+              <!-- 每日轻量化任务 -->
+              <div class="app-daily-task">
+                <div class="task-header">
+                  <span>📅 今日备考必做任务</span>
+                  <span style="font-size:10px; color:var(--primary-2star); font-weight:700;">稳及格保障</span>
+                </div>
+                <!-- 动态填充今日2个考点任务 -->
+                <div id="task-points-container"></div>
+                <!-- 动态填充今日刷题任务 -->
+                <div id="task-quiz-container"></div>
+                
+                <button class="btn-primary" id="home-checkin-btn" style="width:100%; margin-top:10px; font-weight:700;" onclick="triggerCheckIn()">
+                  每日打卡签到
+                </button>
+              </div>
+            </div>
+            
+            <!-- ================= TAB 2: 考点速记营 ================= -->
+            <div class="app-view" id="app-view-camp">
+              <div class="camp-filters">
+                <div class="filter-badge active" onclick="filterCamp('all')">全部</div>
+                <div class="filter-badge" onclick="filterCamp('star3')">★★★ 必考</div>
+                <div class="filter-badge" onclick="filterCamp('star2')">★★ 理解</div>
+              </div>
+              
+              <div id="mobile-kp-list" style="display:flex; flex-direction:column; gap:14px;">
+                <!-- 动态载入考点列表 -->
+              </div>
+            </div>
+            
+            <!-- ================= TAB 3: 碎片听记 ================= -->
+            <div class="app-view" id="app-view-audio">
+              <div style="font-weight:700; font-size:12px; color:var(--app-text-muted);">🔊 支持后台播放，同步大字朗读讲义</div>
+              
+              <div id="mobile-audio-list" style="display:flex; flex-direction:column; gap:10px;">
+                <!-- 动态载入音频列表 -->
+              </div>
+            </div>
+            
+            <!-- ================= TAB 4: 精简真题 ================= -->
+            <div class="app-view" id="app-view-quiz">
+              <div class="sub-header-tabs">
+                <div class="sub-header-tab active" onclick="switchQuizSubTab('practice')">真题速刷模式</div>
+                <div class="sub-header-tab" onclick="switchQuizSubTab('mistake')">错题巩固本</div>
+              </div>
+              
+              <div id="mobile-quiz-content">
+                <!-- 动态填充题目卡片 -->
+              </div>
+            </div>
+            
+            <!-- ================= TAB 5: 个人中心 ================= -->
+            <div class="app-view" id="app-view-profile">
+              <!-- 用户头部 -->
+              <div class="profile-card">
+                <div class="profile-user-info">
+                  <div class="avatar">王</div>
+                  <div class="user-meta">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <h3>王大建 (大龄备考)</h3>
+                      <span class="vip-badge">全站通用通卡</span>
+                    </div>
+                    <p style="margin-top:2px;">学习账号: 138****8888</p>
+                  </div>
+                </div>
+                <div style="font-size:10px; border-top:1px solid rgba(255,255,255,0.1); padding-top:8px; margin-top:4px;">
+                  🎗️ 专享权益：全品类职业考试解锁、艾宾浩斯复盘无限次
+                </div>
+              </div>
+              
+              <!-- 核心大字与护眼控制面板 -->
+              <div class="settings-group">
+                <div style="font-weight:800; font-size:13px; border-bottom:1px solid var(--app-border); padding-bottom:6px; color:var(--primary-3star);">
+                  🛠️ 大龄考生关怀设置
+                </div>
+                
+                <!-- 字体大小缩放 -->
+                <div class="setting-row">
+                  <div>
+                    <div class="setting-title">阅读字号大小</div>
+                    <div class="setting-desc">放大界面字体，防疲劳防看错</div>
+                  </div>
+                  <div class="size-selector">
+                    <button class="size-btn active" onclick="changeFontSize('font-normal')">常规</button>
+                    <button class="size-btn" onclick="changeFontSize('font-medium')">中</button>
+                    <button class="size-btn" onclick="changeFontSize('font-large')">大</button>
+                  </div>
+                </div>
+                
+                <!-- 护眼模式 -->
+                <div class="setting-row">
+                  <div>
+                    <div class="setting-title">纸张护眼色彩</div>
+                    <div class="setting-desc">开启后底色变为温和的暖黄色纸张</div>
+                  </div>
+                  <label class="switch-control">
+                    <input type="checkbox" id="eye-protect-toggle" onchange="toggleEyeProtect()">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+              
+              <!-- 常见服务入口 -->
+              <div class="settings-group" style="padding:4px 16px;">
+                <div class="setting-row" style="padding:10px 0; border-bottom:1px solid var(--app-border); cursor:pointer;" onclick="openWechatPopup('group')">
+                  <div class="setting-title">🤝 大龄考生备考微信群</div>
+                  <span style="color:var(--app-text-muted); font-size:11px;">加入群聊 ➔</span>
+                </div>
+                <div class="setting-row" style="padding:10px 0; border-bottom:1px solid var(--app-border); cursor:pointer;" onclick="openWechatPopup('service')">
+                  <div class="setting-title">📞 专属教务班主任微信</div>
+                  <span style="color:var(--app-text-muted); font-size:11px;">添加微信 ➔</span>
+                </div>
+                <div class="setting-row" style="padding:10px 0; cursor:pointer;" onclick="alert('慢慢记 V1.0.0\n大龄经济师备考专属记忆版\n专为记忆薄弱考友定制')">
+                  <div class="setting-title">ℹ️ 关于“慢慢记”大龄备考版</div>
+                  <span style="color:var(--app-text-muted); font-size:11px;">V1.0.0</span>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+          
+          <!-- 3.4 碎片听学底部悬浮音乐播放器组件 (全局可用) -->
+          <div class="audio-player-panel" id="audio-player-panel">
+            <div class="player-main-info">
+              <div class="vis-visualizer">
+                <div class="visualizer-container">
+                  <div class="vis-bar"></div>
+                  <div class="vis-bar"></div>
+                  <div class="vis-bar"></div>
+                  <div class="vis-bar"></div>
+                  <div class="vis-bar"></div>
+                </div>
+              </div>
+              <div class="player-title" id="player-track-title">音频未加载</div>
+              <div class="player-controls">
+                <button class="player-rate-btn" id="player-rate-btn" onclick="changePlaybackRate()">1.0x 正常</button>
+                <button class="player-btn play-pause-btn" onclick="togglePlayPause()"><span id="player-play-btn-icon">▶</span></button>
+              </div>
+            </div>
+            
+            <!-- 听字本歌词字幕框 -->
+            <div class="subtitles-scroller">
+              <div class="subtitles-wrapper" id="subtitles-wrapper">
+                <!-- 动态填充字幕内容 -->
+              </div>
+            </div>
+            
+            <div class="progress-bar-container">
+              <span id="player-current-time">00:00</span>
+              <div class="progress-track">
+                <div class="progress-fill" id="player-progress-fill"></div>
+              </div>
+              <span id="player-total-time">00:00</span>
+            </div>
+          </div>
+          
+          <!-- 3.5 底部标签栏 TabBar -->
+          <div class="app-tabbar">
+            <div class="tab-item active" onclick="switchTab('home', this)">
+              <i style="font-style:normal;">🏠</i>
+              <span>首页速学</span>
+            </div>
+            <div class="tab-item" onclick="switchTab('camp', this)">
+              <i style="font-style:normal;">📝</i>
+              <span>考点速记</span>
+            </div>
+            <div class="tab-item" style="position:relative;" onclick="switchTab('audio', this)">
+              <i style="font-style:normal;">🎧</i>
+              <span>碎片听学</span>
+            </div>
+            <div class="tab-item" style="position:relative;" onclick="switchTab('quiz', this)">
+              <i style="font-style:normal;">✍️</i>
+              <span>真题精练</span>
+              <span id="review-alert-badge" style="display:none; position:absolute; top:4px; right:15px; width:7px; height:7px; background:#ef4444; border-radius:50%; border:1px solid white;"></span>
+            </div>
+            <div class="tab-item" onclick="switchTab('profile', this)">
+              <i style="font-style:normal;">👤</i>
+              <span>个人中心</span>
+            </div>
+          </div>
+          
+          <!-- 提示气泡 (Toasts) -->
+          <div class="toast-msg" id="mobile-toast">操作成功</div>
+          
+          <!-- 二维码微信弹窗 -->
+          <div class="wechat-popup" id="wechat-popup">
+            <!-- 动态生成弹窗内容 -->
+          </div>
+          
+        </div>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  <!-- 引入逻辑脚本 -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
