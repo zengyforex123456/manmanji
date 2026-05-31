@@ -247,7 +247,7 @@ if (decision) {
 // Save decision to project-state.json
 await agent(
   `Update .claude/project-state.json with the following decision result:
-   - Add to phase_history: "${new Date().toISOString()}: decision=${decision?.decision}, risk=${decision?.risk_score}, confidence=${decision?.confidence}"
+   - Add to phase_history: "SESSION_TIMESTAMP: decision=${decision?.decision}, risk=${decision?.risk_score}, confidence=${decision?.confidence}" （agent will replace SESSION_TIMESTAMP with actual time）
    - If decision is GO or CONDITIONAL_GO, update the relevant phase gate
    - If decision is NO_GO, add blocked_operations with the blocking reasons`,
   { phase: 'Recommend' }

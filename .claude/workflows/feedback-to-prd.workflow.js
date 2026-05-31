@@ -88,7 +88,7 @@ if (localFile?.items) {
     raw_title: i.title,
     raw_body: i.body || '',
     labels: [],
-    created_at: new Date().toISOString()
+    created_at: 'SESSION_TIMESTAMP'
   }))
 }
 
