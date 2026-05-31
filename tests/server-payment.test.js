@@ -1,7 +1,7 @@
 // Server payment logic unit tests
 // Tests core payment functions without requiring Express server
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 // ─── Replicated from server/routes/payment.js ───
 const PRICES = { single: 3990, all_access: 9900 };

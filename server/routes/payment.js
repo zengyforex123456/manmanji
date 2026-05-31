@@ -10,8 +10,8 @@ const router = express.Router();
 const orders = new Map();
 
 // Server-authoritative prices (client CANNOT set amount)
-const PRICES = { single: 3990, all_access: 9900 }; // cents
-const NAMES = { single: 'Single-subject annual', all_access: 'All-access annual pass' };
+const PRICES = { single: 3990, vip: 9900 }; // cents
+const NAMES = { single: 'Single-subject annual', vip: 'All-access annual pass' };
 
 // POST /api/payment/create-order
 router.post('/create-order', async (req, res) => {

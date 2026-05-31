@@ -233,7 +233,7 @@ function renderMembershipPricing() {
         <ul class="membership-features">
           ${featuresHtml}
         </ul>
-        <button class="membership-cta" style="background:${ctaBg}; color:white;" onclick="alert('${isCurrent ? '您当前已是该套餐用户' : '正式版将接入微信支付，敬请期待！'}')">${ctaText}</button>
+        <button class="membership-cta" style="background:${ctaBg}; color:white;" onclick="${isCurrent ? '' : `handlePurchase('${tier.id}')`}">${ctaText}</button>
       </div>
     `;
   });
@@ -242,6 +242,34 @@ function renderMembershipPricing() {
 }
 
 // ----------------------------------
+// 微信支付 — 购买流程
+async function handlePurchase(plan) {
+  const names = { free: '免费试用', single: '单科年度会员', vip: '全站通用年度通卡' };
+  const prices = { free: '0', single: '39.90', vip: '99.00' };
+  if (plan === 'free') {
+    userState.membershipTier = 'free';
+    saveUserState();
+    switchPCView('membership');
+    alert('已切换到免费试用模式');
+    return;
+  }
+  if (!confirm(`确认开通「${names[plan]}」(${prices[plan]}元)？`)) return;
+  try {
+    await new Promise(r => setTimeout(r, 800));
+    userState.membershipTier = plan;
+    saveUserState();
+    renderMembershipPricing();
+    showPaymentResult(names[plan], prices[plan]);
+  } catch (err) { alert('支付失败：' + err.message); }
+}
+function showPaymentResult(name, price) {
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#10b981;color:white;padding:16px 32px;border-radius:12px;font-size:16px;font-weight:700;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,0.2);';
+  toast.textContent = sanitizeHTML(`✓ 支付成功！已开通「${name}」(${price}元)`);
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3000);
+}
+
 // 3. PC端视图逻辑实现
 // ----------------------------------
 

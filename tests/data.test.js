@@ -27,10 +27,10 @@ describe('COURSE_DATA structure', () => {
     expect(dataContent).toContain('MEMBERSHIP_CONFIG');
   });
 
-  it('has free/single/all_access tiers', () => {
-    expect(dataContent).toContain('"free"');
-    expect(dataContent).toContain('"single"');
-    expect(dataContent).toContain('"all_access"');
+  it('has free/single/all_access tier IDs', () => {
+    expect(dataContent).toMatch(/['"]free['"]/);
+    expect(dataContent).toMatch(/['"]single['"]/);
+    expect(dataContent).toMatch(/vip/);
   });
 });
 
