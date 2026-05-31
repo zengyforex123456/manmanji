@@ -78,10 +78,12 @@ log(secResult ? `Security: ${secResult.configured ? (secResult.passed ? 'PASS (0
 
 // === Phase: Report ===
 phase('Report')
-const allPassed = (!lintResult || lintResult.passed) &&
-                  (!typeResult || typeResult.passed) &&
-                  (!testResult || testResult.passed) &&
-                  (!secResult || secResult.passed)
+// NOT CONFIGURED = NOT APPLICABLE = PASS (don't fail projects for missing tooling)
+const lintOk = !lintResult || !lintResult.configured || lintResult.passed
+const typeOk = !typeResult || !typeResult.configured || typeResult.passed
+const testOk = !testResult || !testResult.configured || testResult.passed
+const secOk = !secResult || !secResult.configured || secResult.passed
+const allPassed = lintOk && typeOk && testOk && secOk
 
 log(`=== Quality Gate Summary ===`)
 log(`Lint:      ${lintResult ? (lintResult.passed ? 'PASS' : 'FAIL') : 'N/A'}`)
@@ -92,10 +94,10 @@ log(`Overall:   ${allPassed ? 'ALL GATES PASSED' : 'SOME GATES FAILED'}`)
 
 // Return structured result for state file update
 return {
-  lint_passed: lintResult?.passed ?? true,
-  typecheck_passed: typeResult?.passed ?? true,
-  test_passed: testResult?.passed ?? true,
-  security_passed: secResult?.passed ?? true,
+  lint_passed: lintResult ? (lintResult.configured ? lintResult.passed : true) : true,
+  typecheck_passed: typeResult ? (typeResult.configured ? typeResult.passed : true) : true,
+  test_passed: testResult ? (testResult.configured ? testResult.passed : true) : true,
+  security_passed: secResult ? (secResult.configured ? secResult.passed : true) : true,
   overall_passed: allPassed,
   details: { lint: lintResult, typecheck: typeResult, test: testResult, security: secResult }
 }
