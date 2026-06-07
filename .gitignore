@@ -25,6 +25,18 @@ credentials*
 .DS_Store
 Thumbs.db
 
+# Vite
+.vite/
+
+# Test
+test-results/
+
+# Temp docs
+~$*.docx
+
+# Large data (generated, not committed)
+/public/data/*/questions.json
+
 # Claude Code (部分)
 .claude/scheduled_tasks.lock
 .claude/debug/

@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "updatedAt": "2026-06-07",
+  "subjects": [
+    {
+      "id": "econ",
+      "name": "中级经济师·经济基础",
+      "icon": "📊",
+      "totalChapters": 37,
+      "questionCount": 19749,
+      "examConfig": {
+        "totalQuestions": 105,
+        "timeLimit": 90,
+        "singleCount": 70,
+        "multiCount": 35,
+        "caseCount": 0
+      },
+      "modules": [
+        {
+          "id": "economics",
+          "name": "经济学基础",
+          "weight": 0.3,
+          "chapters": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        },
+        {
+          "id": "public_finance",
+          "name": "财政",
+          "weight": 0.25,
+          "chapters": [
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "id": "finance",
+          "name": "货币与金融",
+          "weight": 0.25,
+          "chapters": [
+            18,
+            19,
+            20,
+            21,
+            22
+          ]
+        },
+        {
+          "id": "statistics",
+          "name": "统计",
+          "weight": 0.08,
+          "chapters": [
+            23,
+            24,
+            25,
+            26,
+            27
+          ]
+        },
+        {
+          "id": "accounting",
+          "name": "会计",
+          "weight": 0.07,
+          "chapters": [
+            28,
+            29,
+            30,
+            31,
+            32
+          ]
+        },
+        {
+          "id": "law",
+          "name": "法律",
+          "weight": 0.05,
+          "chapters": [
+            33,
+            34,
+            35,
+            36,
+            37
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hr",
+      "name": "中级经济师·人力资源管理",
+      "icon": "👥",
+      "totalChapters": 19,
+      "questionCount": 10545,
+      "examConfig": {
+        "totalQuestions": 100,
+        "timeLimit": 90,
+        "singleCount": 60,
+        "multiCount": 20,
+        "caseCount": 20
+      }
+    },
+    {
+      "id": "biz",
+      "name": "中级经济师·工商管理",
+      "icon": "🏭",
+      "totalChapters": 11,
+      "questionCount": 4740,
+      "examConfig": {
+        "totalQuestions": 100,
+        "timeLimit": 90,
+        "singleCount": 60,
+        "multiCount": 20,
+        "caseCount": 20
+      }
+    }
+  ]
+}
