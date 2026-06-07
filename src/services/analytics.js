@@ -4,6 +4,7 @@
 import { DB } from '../core/db.js';
 import { State } from '../core/state.js';
 import { getSubjectMeta } from '../data/subjects-meta.js';
+import { Ebbinghaus } from './ebbinghaus.js';
 
 // ─── R33: 错因诊断 ───
 // 基于答题历史分析错误模式
@@ -201,7 +202,7 @@ async function getAdaptivePlan(subjectId = null) {
   });
 
   // 每日复习提醒
-  const due = await import('./ebbinghaus.js').then(m => m.Ebbinghaus.getDueReviews(subjectId));
+  const due = await Ebbinghaus.getDueReviews(subjectId);
   if (due.length > 0) {
     recommendations.unshift({
       type: 'review_due',
