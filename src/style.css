@@ -403,6 +403,50 @@ body {
 .explore-why{font-size:10px;color:#94a3b8;flex-shrink:0;text-align:right}
 
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr)}
+
+/* ═══ 20门考试响应式导航 ═══ */
+.sn-trigger{display:flex;align-items:center;gap:8px;padding:8px 16px;background:#fff;border:1px solid #cbd5e1;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;transition:all .15s;min-width:140px}
+.sn-trigger:hover{border-color:#0f766e}
+.sn-icon{font-size:18px}
+.sn-name{color:#0f172a;flex:1}
+.sn-arrow{color:#94a3b8;font-size:12px}
+.sn-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:200;display:none}
+.sn-overlay.open{display:block}
+.sn-panel{position:fixed;top:0;right:0;bottom:0;width:420px;max-width:100vw;background:#f1f5f9;z-index:201;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow-y:auto;display:flex;flex-direction:column}
+.sn-panel.open{transform:translateX(0)}
+.sn-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:#fff;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:1}
+.sn-title{font-weight:800;font-size:15px}
+.sn-close{cursor:pointer;font-size:18px;color:#94a3b8;padding:4px 8px}
+.sn-search{padding:12px 20px;background:#fff}
+.sn-search input{width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;font-family:var(--font-sans)}
+.sn-search input:focus{border-color:#0f766e}
+.sn-categories{display:flex;gap:6px;padding:12px 20px;background:#fff;border-bottom:1px solid #e2e8f0;overflow-x:auto;flex-wrap:wrap}
+.sn-cat{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;background:#f1f5f9;color:#64748b;white-space:nowrap;transition:all .15s}
+.sn-cat.active,.sn-cat:hover{background:#0f766e;color:#fff}
+.sn-recents{padding:16px 20px 0}
+.sn-section-title{font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.sn-card-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 20px 20px}
+.sn-card{background:#fff;border:2px solid #e2e8f0;border-radius:12px;padding:14px;cursor:pointer;transition:all .15s;position:relative}
+.sn-card:hover{border-color:#0f766e;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.sn-card.active{border-color:#0f766e;background:#f0fdf4}
+.sn-card-icon{font-size:28px;margin-bottom:6px}
+.sn-card-name{font-size:14px;font-weight:700;color:#0f172a;margin-bottom:4px;line-height:1.3}
+.sn-card-meta{display:flex;gap:8px;font-size:10px;color:#94a3b8}
+.sn-card-badge{position:absolute;top:8px;right:8px;background:#0f766e;color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700}
+.sn-empty{text-align:center;padding:40px;color:#94a3b8;font-size:14px}
+.sn-card-parent{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer}
+.sn-card-arrow{font-size:12px;color:#94a3b8;margin-left:auto;transition:transform .2s}
+.sn-card-arrow.open{transform:rotate(180deg)}
+.sn-children{display:none;padding:8px 0 8px 16px;grid-column:1/-1}
+.sn-children.open{display:flex;flex-direction:column;gap:6px}
+.sn-sub-card{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;transition:all .15s;font-size:13px}
+.sn-sub-card:hover{border-color:#0f766e;background:#f0fdf4}
+.sn-sub-card.active{border-color:#0f766e;background:#f0fdf4}
+.sn-sub-icon{font-size:16px}
+.sn-sub-name{font-weight:600;color:#0f172a;flex:1}
+.sn-sub-count{font-size:11px;color:#94a3b8}
+
+@media(max-width:768px){.sn-card-grid{grid-template-columns:repeat(2,1fr)}}
 /* ═══ 极简学习中心 ═══ */
 .lc-section{margin-bottom:20px}
 .lc-section-title{font-size:16px;font-weight:800;color:#0f172a;margin-bottom:2px}

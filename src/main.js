@@ -7,6 +7,7 @@ import { renderMockExam } from './components/mock-exam.js';
 import { LoginPage } from './components/login.js';
 import { Analytics } from './services/analytics.js';
 import { Ebbinghaus } from './services/ebbinghaus.js';
+import { renderSubjectNav } from './components/subject-nav.js';
 import './style.css';
 
 // LC chapter functions (lightweight)
@@ -369,20 +370,7 @@ function applyProfile(p) {
   }
 }
 
-function renderSubjectNav() {
-  const nav = document.getElementById('nav-subjects');
-  if (!nav) return;
-  const subjects = [
-    { id: 'econ', name: '经济基础' },
-    { id: 'hr', name: '人力' },
-    { id: 'biz', name: '工商' },
-  ];
-  const active = State.getActiveSubjectId();
-  nav.innerHTML = subjects.map(s =>
-    `<span class="nav-subject-item ${s.id === active ? 'active' : ''}"
-           onclick="switchSubject('${s.id}')">${s.name}</span>`
-  ).join('');
-}
+// renderSubjectNav() now in src/components/subject-nav.js
 
 function getGreeting() {
   const h = new Date().getHours();
