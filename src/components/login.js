@@ -22,14 +22,14 @@ function render(cb) {
       <div id="p-pwd" style="display:${_tab=='pwd'?'block':'none'}">
         <div class="input-row"><input id="un" type="text" autocomplete="off" name="user-x" placeholder="用户名" class="login-input"></div>
         <div class="input-row"><input id="pw" type="password" autocomplete="new-password" name="pwd-x" placeholder="密码（≥6位）" class="login-input"></div>
-        <div style="display:flex;gap:8px"><button class="cta-primary" style="flex:1" id="btn-pwd-login">登录</button><button class="auth-register-btn" id="btn-reg">注册</button></div><div id="m2" class="auth-msg"></div>
+        <div style="display:flex;gap:8px"><button class="cta-primary" style="flex:1" id="btn-pwd-login">登录</button><button class="auth-register-btn" id="btn-reg" onclick="LP.reg()">注册</button></div><div id="m2" class="auth-msg"></div>
       </div>
       <div style="text-align:center;margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0">
         <button class="auth-wechat-btn" id="btn-wx">💬 微信登录</button>
       </div>
       <div style="text-align:center;margin-top:8px"><button class="text-btn" id="btn-skip">跳过</button></div>
     </main>`;
-  setTimeout(() => { delegateClicks(); const ph = document.getElementById('ph'); if (ph && (ph.value === 'root' || ph.value === 'administrator')) ph.value = ''; }, 100);
+  window.LP = { tab, sendCode, loginPhone, login, reg, wx }; setTimeout(() => { delegateClicks(); const ph = document.getElementById('ph'); if (ph && (ph.value === 'root' || ph.value === 'administrator')) ph.value = ''; }, 100);
   window._onLoginOk = cb;
 }
 
