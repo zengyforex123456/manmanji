@@ -236,17 +236,16 @@ function trackEvent(event, data) {
   }
 }
 
+const METRICS_API = 'http://localhost:3010/api/metrics';
 function flushAnalytics() {
   if (!_state.analyticsEvents || _state.analyticsEvents.length === 0) return;
   const events = _state.analyticsEvents.splice(0);
   try {
-    const blob = new Blob([JSON.stringify(events)], { type: 'application/json' });
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon('/api/analytics', blob);
-    }
-  } catch (e) {
-    // 静默失败，不影响主流程
-  }
+    fetch(METRICS_API, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ events }),
+    }).catch(() => {});
+  } catch (e) { /* silent */ }
 }
 
 // ─── 订阅/通知（事件总线） ───

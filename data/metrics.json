@@ -1,0 +1,20 @@
+[
+  {
+    "event": "session_start",
+    "data": {},
+    "timestamp": 1,
+    "serverTime": "2026-06-08T12:46:12.066Z"
+  },
+  {
+    "event": "question_answered",
+    "data": {
+      "correct": false,
+      "tags": [
+        "����۸���",
+        "�ڶ���"
+      ]
+    },
+    "timestamp": 2,
+    "serverTime": "2026-06-08T12:46:12.068Z"
+  }
+]

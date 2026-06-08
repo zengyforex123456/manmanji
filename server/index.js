@@ -10,7 +10,7 @@ import crypto from 'crypto';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, '..', 'public', 'data');
-const PORT = process.env.API_PORT || 3009;
+const PORT = process.env.API_PORT || 3010;
 const AUTH_ENABLED = process.env.MM_API_KEY ? true : false;
 const API_KEY = process.env.MM_API_KEY || '';
 
@@ -490,6 +490,66 @@ app.get('/api/progress/:subjectId', (req, res) => {
     const progress = progressStore.get(key) || [];
     res.json({ subjectId: req.params.subjectId, progress, count: progress.length });
   } catch (e) { res.status(401).json({ error: 'token无效' }); }
+});
+
+// ─── 埋点数据收集（持久化） ───
+const METRICS_FILE = path.join(__dirname, '..', 'data', 'metrics.json');
+const metricsStore = loadJSON(METRICS_FILE, []);
+function persistMetrics() { saveJSON(METRICS_FILE, metricsStore); }
+
+app.post('/api/metrics', (req, res) => {
+  const { events } = req.body;
+  if (!Array.isArray(events)) return res.status(400).json({ error: 'events必须为数组' });
+  events.forEach(e => {
+    e.serverTime = new Date().toISOString();
+    metricsStore.push(e);
+  });
+  if (metricsStore.length > 10000) metricsStore.splice(0, metricsStore.length - 10000);
+  persistMetrics();
+  res.json({ received: events.length });
+});
+
+// ─── 用户反馈收集 ───
+const FEEDBACK_FILE = path.join(__dirname, '..', 'data', 'feedback.json');
+const feedbackStore = loadJSON(FEEDBACK_FILE, []);
+app.post('/api/feedback', (req, res) => {
+  const { text, type, user } = req.body;
+  if (!text) return res.status(400).json({ error: '反馈内容不能为空' });
+  feedbackStore.push({ text, type: type || '建议', user: user || '匿名', time: new Date().toISOString() });
+  saveJSON(FEEDBACK_FILE, feedbackStore);
+  res.json({ success: true, count: feedbackStore.length });
+});
+
+app.get('/api/metrics/summary', (req, res) => {
+  const now = Date.now();
+  const today = new Date().toDateString();
+  const sessions = metricsStore.filter(e => e.event === 'session_start');
+  const todaySessions = sessions.filter(e => new Date(e.serverTime).toDateString() === today);
+  const registrations = metricsStore.filter(e => e.event === 'user_registered');
+  const answers = metricsStore.filter(e => e.event === 'question_answered');
+  const completions = metricsStore.filter(e => e.event === 'mode_completed');
+
+  // 做题时长
+  const totalTime = completions.reduce((s, e) => s + (e.data?.totalTime || 0), 0);
+  const avgTime = completions.length > 0 ? Math.round(totalTime / completions.length / 60) : 0;
+
+  // 错题Top10知识点
+  const wrongTags = {};
+  answers.filter(e => e.data?.correct === false).forEach(e => {
+    const tags = e.data?.tags || [];
+    tags.forEach(t => { wrongTags[t] = (wrongTags[t] || 0) + 1; });
+  });
+  const top10Wrong = Object.entries(wrongTags).sort((a,b) => b[1]-a[1]).slice(0,10).map(([tag,count]) => ({tag, count}));
+
+  res.json({
+    dau: todaySessions.length,
+    totalSessions: sessions.length,
+    registrations: registrations.length,
+    answersRecorded: answers.length,
+    avgQuizTimeMin: avgTime,
+    completions: completions.length,
+    top10Wrong,
+  });
 });
 
 // ─── 健康检查 ───

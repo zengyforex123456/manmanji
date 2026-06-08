@@ -1,6 +1,6 @@
 // 极简登录模块
 import { State } from '../core/state.js';
-const API = 'http://localhost:3009';
+const API = 'http://localhost:3010';
 
 let _tab = 'phone';
 
@@ -100,6 +100,7 @@ function ok(user, type) {
   localStorage.setItem('mmj_token', btoa(JSON.stringify({phone:'u:'+(user.username||user.phone||'wx'),ts:Date.now()})));
   localStorage.setItem('mmj_user', JSON.stringify({...user, loginType:type}));
   State.setUserId(user.username||user.phone, type);
+  State.trackEvent('user_registered', { loginType: type, username: user.username });
   import('../services/ebbinghaus.js').then(m => m.Ebbinghaus.pullFromCloud());
   if (window._onLoginOk) window._onLoginOk(user); else window.goHome();
 }
