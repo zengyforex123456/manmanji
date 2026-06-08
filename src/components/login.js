@@ -6,32 +6,42 @@ let _tab = 'phone';
 
 function render(cb) {
   document.getElementById('app').innerHTML = `
-    <nav class="top-nav"><span onclick="window.goHome()" style="cursor:pointer;font-size:14px;color:var(--text-secondary)">←</span><div class="nav-brand">职考通</div><span></span></nav>
+    <nav class="top-nav"><span id="btn-back" style="cursor:pointer;font-size:14px;color:var(--text-secondary)">←</span><div class="nav-brand">职考通</div><span></span></nav>
     <main style="max-width:360px;margin:32px auto;padding:0 16px">
       <div style="text-align:center;margin-bottom:20px"><div style="font-size:36px">📚</div><div style="font-size:18px;font-weight:800">登录职考通</div></div>
       <div class="auth-tabs">
-        <div class="auth-tab ${_tab=='phone'?'active':''}" onclick="LP.tab(&quot;phone&quot;)">手机</div>
-        <div class="auth-tab ${_tab=='pwd'?'active':''}" onclick="LP.tab(&quot;pwd&quot;)">密码</div>
+        <div class="auth-tab ${_tab=='phone'?'active':''}" id="tab-phone">手机</div>
+        <div class="auth-tab ${_tab=='pwd'?'active':''}" id="tab-pwd">密码</div>
       </div>
       <div id="p-phone" style="display:${_tab=='phone'?'block':'none'}">
-        <div class="input-row"><span style="padding:12px;color:#64748b;font-weight:600">+86</span><input id="ph" type="tel" maxlength="11" placeholder="手机号" class="login-input"></div>
-        <div class="input-row"><input id="cd" type="text" maxlength="6" placeholder="验证码" class="login-input" style="flex:1"><button id="sc" class="auth-code-btn" onclick="LP.sendCode()">获取</button></div>
-        <button class="cta-primary" onclick="LP.loginPhone()">登录</button><div id="m1" class="auth-msg"></div>
+        <div class="input-row"><span style="padding:12px;color:#64748b;font-weight:600">+86</span><input id="ph" type="tel" autocomplete="off" maxlength="11" placeholder="手机号" class="login-input"></div>
+        <div class="input-row"><input id="cd" type="text" autocomplete="off" maxlength="6" placeholder="验证码" class="login-input" style="flex:1"><button id="btn-send" class="auth-code-btn">获取</button></div>
+        <button class="cta-primary" id="btn-phone-login">登录</button><div id="m1" class="auth-msg"></div>
       </div>
       <div id="p-pwd" style="display:${_tab=='pwd'?'block':'none'}">
-        <div class="input-row"><input id="un" type="text" placeholder="用户名" class="login-input"></div>
-        <div class="input-row"><input id="pw" type="password" placeholder="密码（≥6位）" class="login-input"></div>
-        <div style="display:flex;gap:8px"><button class="cta-primary" style="flex:1" onclick="LP.login()">登录</button><button class="auth-register-btn" onclick="LP.reg()">注册</button></div><div id="m2" class="auth-msg"></div>
+        <div class="input-row"><input id="un" type="text" autocomplete="off" placeholder="用户名" class="login-input"></div>
+        <div class="input-row"><input id="pw" type="password" autocomplete="off" placeholder="密码（≥6位）" class="login-input"></div>
+        <div style="display:flex;gap:8px"><button class="cta-primary" style="flex:1" id="btn-pwd-login">登录</button><button class="auth-register-btn" id="btn-reg">注册</button></div><div id="m2" class="auth-msg"></div>
       </div>
       <div style="text-align:center;margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0">
-        <button class="auth-wechat-btn" onclick="LP.wx()">💬 微信登录</button>
+        <button class="auth-wechat-btn" id="btn-wx">💬 微信登录</button>
       </div>
-      <div style="text-align:center;margin-top:8px"><button class="text-btn" onclick="window.goHome()">跳过</button></div>
+      <div style="text-align:center;margin-top:8px"><button class="text-btn" id="btn-skip">跳过</button></div>
     </main>`;
-  window.LP = { tab, sendCode, loginPhone, login, reg, wx };
+  setTimeout(delegateClicks, 50);
   window._onLoginOk = cb;
 }
 
+function bind(sel, ev, fn) { const el = document.querySelector(sel); if (el) el.addEventListener(ev, fn); }
+function delegateClicks() {
+  const map = {
+    'btn-back': ()=>window.goHome(), 'btn-skip': ()=>window.goHome(),
+    'tab-phone': ()=>tab('phone'), 'tab-pwd': ()=>tab('pwd'),
+    'btn-send': sendCode, 'btn-phone-login': loginPhone,
+    'btn-pwd-login': login, 'btn-reg': reg, 'btn-wx': wx,
+  };
+  Object.entries(map).forEach(([id, fn]) => bind('#'+id, 'click', fn));
+}
 function tab(t) { _tab = t; render(window._onLoginOk); }
 
 async function sendCode() {
@@ -102,7 +112,7 @@ function getUser() { try { return JSON.parse(localStorage.getItem('mmj_user')); 
 function renderProfile() {
   const u = getUser();
   document.getElementById('app').innerHTML = `
-    <nav class="top-nav"><span onclick="window.goHome()" style="cursor:pointer;font-size:14px;color:var(--text-secondary)">←</span><div class="nav-brand">个人中心</div><span></span></nav>
+    <nav class="top-nav"><span id="btn-back" style="cursor:pointer;font-size:14px;color:var(--text-secondary)">←</span><div class="nav-brand">个人中心</div><span></span></nav>
     <main style="max-width:360px;margin:24px auto;padding:0 16px">
       ${u ? `<div style="background:linear-gradient(135deg,#0f766e,#14b8a6);border-radius:16px;padding:24px;text-align:center;color:#fff;margin-bottom:16px">
         <div style="font-size:40px;margin-bottom:8px">${u.loginType=='wechat'?'💬':'👤'}</div>
