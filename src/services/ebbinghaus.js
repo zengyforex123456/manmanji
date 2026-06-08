@@ -134,7 +134,7 @@ async function initQuestion(questionId, subjectId = null) {
 }
 
 // ─── R46: 云端同步 ───
-const SYNC_API = window.location.hostname === 'localhost' ? 'http://localhost:3007' : '/api';
+const SYNC_API = window.location.hostname === 'localhost' ? 'http://localhost:3009' : '/api';
 let _syncQueue = [];
 let _syncTimer = null;
 

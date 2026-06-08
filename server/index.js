@@ -10,7 +10,7 @@ import crypto from 'crypto';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, '..', 'public', 'data');
-const PORT = process.env.API_PORT || 3007;
+const PORT = process.env.API_PORT || 3009;
 const AUTH_ENABLED = process.env.MM_API_KEY ? true : false;
 const API_KEY = process.env.MM_API_KEY || '';
 
@@ -288,9 +288,30 @@ function updateSubjectCount(subjectId, count) {
 
 // ─── 账号体系（R44-R46） ───
 
-// 内存存储（MVP阶段，后续迁MongoDB）
-const users = new Map(); // phone -> { phone, wechatOpenId, nickName, createdAt, membershipTier }
-const codes = new Map(); // phone -> { code, expires }
+// JSON文件持久化存储
+const DATA_FILE = path.join(__dirname, '..', 'data', 'users.json');
+const PROGRESS_FILE = path.join(__dirname, '..', 'data', 'progress.json');
+
+function loadJSON(file, fallback = {}) {
+  try { if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf-8')); }
+  catch(e) { console.error(`Load ${file} failed:`, e.message); }
+  return fallback;
+}
+function saveJSON(file, data) {
+  try {
+    const dir = path.dirname(file);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf-8');
+  } catch(e) { console.error(`Save ${file} failed:`, e.message); }
+}
+
+const users = new Map(Object.entries(loadJSON(DATA_FILE, {})));
+const codes = new Map();
+const progressData = loadJSON(PROGRESS_FILE, {});
+function persistUsers() { saveJSON(DATA_FILE, Object.fromEntries(users)); }
+function persistProgress() {
+  if (typeof progressStore !== 'undefined') saveJSON(PROGRESS_FILE, Object.fromEntries(progressStore));
+}
 
 // 发送验证码（开发模式：打印到控制台）
 app.post('/api/auth/send-code', (req, res) => {
@@ -324,7 +345,7 @@ app.post('/api/auth/login-phone', (req, res) => {
       createdAt: new Date().toISOString(),
       membershipTier: 'vip', // MVP演示通卡
     };
-    users.set(phone, user);
+    users.set(phone, user); persistUsers();
   }
   const token = Buffer.from(JSON.stringify({ phone, ts: Date.now() })).toString('base64');
   user.token = token;
@@ -347,7 +368,7 @@ app.post('/api/auth/login-wechat', (req, res) => {
       createdAt: new Date().toISOString(),
       membershipTier: 'vip',
     };
-    users.set(phone, user);
+    users.set(phone, user); persistUsers();
   }
   const token = Buffer.from(JSON.stringify({ phone, ts: Date.now() })).toString('base64');
   user.token = token;
@@ -393,6 +414,7 @@ app.post('/api/auth/login-email', (req, res) => {
   if (!user) {
     user = { email, phone: key, nickName: email.split('@')[0], createdAt: new Date().toISOString(), membershipTier: 'vip' };
     users.set(key, user);
+    persistUsers();
   }
   const token = Buffer.from(JSON.stringify({ phone: key, ts: Date.now() })).toString('base64');
   user.token = token;
@@ -415,6 +437,7 @@ app.post('/api/auth/register', (req, res) => {
     nickName: username, createdAt: new Date().toISOString(), membershipTier: 'vip',
   };
   users.set(key, user);
+  persistUsers();
   const token = Buffer.from(JSON.stringify({ phone: key, ts: Date.now() })).toString('base64');
   user.token = token;
   res.json({ success: true, user: { username: user.username, nickName: user.nickName, membershipTier: user.membershipTier }, token });
@@ -434,7 +457,7 @@ app.post('/api/auth/login-password', (req, res) => {
 });
 
 // ─── R46: 进度云端同步 ───
-const progressStore = new Map();
+const progressStore = new Map(Object.entries(loadJSON(PROGRESS_FILE, {})));
 
 app.put('/api/progress/:subjectId', (req, res) => {
   const token = req.headers['authorization']?.replace('Bearer ', '');
@@ -452,7 +475,7 @@ app.put('/api/progress/:subjectId', (req, res) => {
       if (!old || new Date(p.lastReview) > new Date(old.lastReview)) merged.set(p.questionId, p);
     });
     const result = Array.from(merged.values());
-    progressStore.set(key, result);
+    progressStore.set(key, result); persistProgress();
     console.log(`[Sync] ${subjectId}: ${result.length} records`);
     res.json({ success: true, count: result.length });
   } catch (e) { res.status(401).json({ error: 'token无效' }); }

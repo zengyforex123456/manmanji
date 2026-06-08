@@ -40,7 +40,7 @@ function calculateWeight(question, progress) {
 }
 
 // ─── 加载题库（API按需 + IndexedDB缓存 + 后台全量同步） ───
-const API = 'http://localhost:3007';
+const API = 'http://localhost:3009';
 let _fullLoadStarted = {};
 
 async function loadSubject(subjectId) {
