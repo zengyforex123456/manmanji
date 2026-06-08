@@ -77,15 +77,15 @@ async function login() {
 }
 
 async function reg() {
-  const un = $('un'), pw = $('pw'), m = $('#m2');
-  if (!un || un.length < 3) { mT(m, '用户名≥3个字符', 1); return; }
-  if (!pw || pw.length < 6) { mT(m, '密码≥6个字符', 1); return; }
+  const un = $('un'), pw = $('pw');
+  if (!un || un.length < 3) { alert('用户名至少3个字符'); return; }
+  if (!pw || pw.length < 6) { alert('密码至少6个字符'); return; }
   try {
     const r = await fetch(`${API}/api/auth/register`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:un,password:pw})});
     const d = await r.json();
-    if (d.success) { mT(m, '注册成功', 0); setTimeout(() => ok(d.user, 'password'), 600); }
-    else mT(m, d.error, 1);
-  } catch(e) { mT(m, '注册失败', 1); }
+    if (d.success) { alert('注册成功！'); ok(d.user, 'password'); }
+    else { alert(d.error); }
+  } catch(e) { alert('注册失败，请检查网络'); }
 }
 
 async function wx() {
