@@ -130,8 +130,8 @@ function renderDashboardShell() {
       <div class="nav-subjects" id="nav-subjects"></div>
       <div class="nav-user" id="nav-user">
         ${state.userId
-          ? `<span id="login-hint" style="background:var(--accent-light);border-color:var(--accent)">👤 ${state.userId.slice(-4)}</span>`
-          : `<span id="login-hint" onclick="LoginPage.render(()=>location.reload())">🔒 登录后可跨设备同步</span>`
+          ? `<span id="login-hint" style="background:var(--accent-light);border-color:var(--accent);cursor:pointer" onclick="LoginPage.renderProfile()">👤 ${state.userId.slice(-4)}</span>`
+          : `<span id="login-hint" onclick="LoginPage.render(()=>window.goHome())">🔒 登录后可跨设备同步</span>`
         }
       </div>
     </nav>

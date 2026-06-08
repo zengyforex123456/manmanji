@@ -10,7 +10,7 @@ import crypto from 'crypto';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, '..', 'public', 'data');
-const PORT = process.env.API_PORT || 3001;
+const PORT = process.env.API_PORT || 3007;
 const AUTH_ENABLED = process.env.MM_API_KEY ? true : false;
 const API_KEY = process.env.MM_API_KEY || '';
 
@@ -366,6 +366,107 @@ app.get('/api/auth/profile', (req, res) => {
   } catch (e) {
     res.status(401).json({ error: 'token无效' });
   }
+});
+
+// ─── 邮箱验证码 ───
+app.post('/api/auth/send-email-code', (req, res) => {
+  const { email } = req.body;
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: '邮箱格式不正确' });
+  }
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  codes.set('email:' + email, { code, expires: Date.now() + 300000 });
+  console.log(`\n📧 [邮箱验证码] ${email} → ${code}\n`);
+  res.json({ success: true, message: '验证码已发送到邮箱（开发模式：查看控制台）' });
+});
+
+app.post('/api/auth/login-email', (req, res) => {
+  const { email, code } = req.body;
+  if (!email || !code) return res.status(400).json({ error: '缺少邮箱或验证码' });
+  const record = codes.get('email:' + email);
+  if (!record || record.code !== code || record.expires < Date.now()) {
+    return res.status(401).json({ error: '验证码错误或已过期' });
+  }
+  codes.delete('email:' + email);
+  const key = 'email:' + email;
+  let user = users.get(key);
+  if (!user) {
+    user = { email, phone: key, nickName: email.split('@')[0], createdAt: new Date().toISOString(), membershipTier: 'vip' };
+    users.set(key, user);
+  }
+  const token = Buffer.from(JSON.stringify({ phone: key, ts: Date.now() })).toString('base64');
+  user.token = token;
+  res.json({ success: true, user: { email: user.email, nickName: user.nickName, membershipTier: user.membershipTier }, token });
+});
+
+// ─── 账号密码注册 ───
+function hashPassword(pwd) {
+  return crypto.createHash('sha256').update(pwd + 'zhikaotong-salt').digest('hex');
+}
+
+app.post('/api/auth/register', (req, res) => {
+  const { username, password } = req.body;
+  if (!username || username.length < 3) return res.status(400).json({ error: '用户名至少3个字符' });
+  if (!password || password.length < 6) return res.status(400).json({ error: '密码至少6个字符' });
+  const key = 'user:' + username;
+  if (users.has(key)) return res.status(409).json({ error: '用户名已存在' });
+  const user = {
+    username, phone: key, passwordHash: hashPassword(password),
+    nickName: username, createdAt: new Date().toISOString(), membershipTier: 'vip',
+  };
+  users.set(key, user);
+  const token = Buffer.from(JSON.stringify({ phone: key, ts: Date.now() })).toString('base64');
+  user.token = token;
+  res.json({ success: true, user: { username: user.username, nickName: user.nickName, membershipTier: user.membershipTier }, token });
+});
+
+app.post('/api/auth/login-password', (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ error: '请输入用户名和密码' });
+  const key = 'user:' + username;
+  const user = users.get(key);
+  if (!user || user.passwordHash !== hashPassword(password)) {
+    return res.status(401).json({ error: '用户名或密码错误' });
+  }
+  const token = Buffer.from(JSON.stringify({ phone: key, ts: Date.now() })).toString('base64');
+  user.token = token;
+  res.json({ success: true, user: { username: user.username, nickName: user.nickName, membershipTier: user.membershipTier }, token });
+});
+
+// ─── R46: 进度云端同步 ───
+const progressStore = new Map();
+
+app.put('/api/progress/:subjectId', (req, res) => {
+  const token = req.headers['authorization']?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: '未登录' });
+  try {
+    const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
+    const { subjectId } = req.params;
+    const { progress } = req.body;
+    if (!Array.isArray(progress)) return res.status(400).json({ error: 'progress必须为数组' });
+    const key = decoded.phone + '_' + subjectId;
+    const existing = progressStore.get(key) || [];
+    const merged = new Map();
+    [...existing, ...progress].forEach(p => {
+      const old = merged.get(p.questionId);
+      if (!old || new Date(p.lastReview) > new Date(old.lastReview)) merged.set(p.questionId, p);
+    });
+    const result = Array.from(merged.values());
+    progressStore.set(key, result);
+    console.log(`[Sync] ${subjectId}: ${result.length} records`);
+    res.json({ success: true, count: result.length });
+  } catch (e) { res.status(401).json({ error: 'token无效' }); }
+});
+
+app.get('/api/progress/:subjectId', (req, res) => {
+  const token = req.headers['authorization']?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: '未登录' });
+  try {
+    const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
+    const key = decoded.phone + '_' + req.params.subjectId;
+    const progress = progressStore.get(key) || [];
+    res.json({ subjectId: req.params.subjectId, progress, count: progress.length });
+  } catch (e) { res.status(401).json({ error: 'token无效' }); }
 });
 
 // ─── 健康检查 ───

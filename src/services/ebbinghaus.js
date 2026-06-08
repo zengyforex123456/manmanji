@@ -96,6 +96,8 @@ async function _recordReviewImpl(questionId, quality, subjectId) {
   }
 
   State.saveNow(); // R21: 答即存
+  // R46: 登录后云端同步
+  syncToCloud(record);
   return record;
 }
 
@@ -131,10 +133,60 @@ async function initQuestion(questionId, subjectId = null) {
   return recordReview(questionId, 0, subjectId); // quality=0 → 放入Box1
 }
 
+// ─── R46: 云端同步 ───
+const SYNC_API = window.location.hostname === 'localhost' ? 'http://localhost:3007' : '/api';
+let _syncQueue = [];
+let _syncTimer = null;
+
+function syncToCloud(record) {
+  const token = localStorage.getItem('mmj_token');
+  if (!token) return;
+  _syncQueue.push(record);
+  if (!_syncTimer) {
+    _syncTimer = setTimeout(flushSync, 3000); // 3秒批量上传
+  }
+}
+
+async function flushSync() {
+  const token = localStorage.getItem('mmj_token');
+  if (!token || _syncQueue.length === 0) { _syncTimer = null; return; }
+  const batch = _syncQueue.splice(0);
+  try {
+    await fetch(`${SYNC_API}/api/progress/${batch[0].subjectId || 'econ'}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ progress: batch }),
+    });
+  } catch (e) { /* 静默失败，下次重试 */ }
+  _syncTimer = null;
+  // 如果还有积压，继续上传
+  if (_syncQueue.length > 0) _syncTimer = setTimeout(flushSync, 3000);
+}
+
+// 登录后拉取云端进度并合并
+async function pullFromCloud() {
+  const token = localStorage.getItem('mmj_token');
+  if (!token) return 0;
+  let total = 0;
+  for (const sid of ['econ','hr','biz']) {
+    try {
+      const r = await fetch(`${SYNC_API}/api/progress/${sid}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (r.ok) {
+        const data = await r.json();
+        if (data.progress && data.progress.length > 0) {
+          for (const p of data.progress) {
+            await DB.putProgress(p);
+            total++;
+          }
+        }
+      }
+    } catch (e) { /* skip failed subject */ }
+  }
+  return total;
+}
+
 export const Ebbinghaus = {
-  getDueReviews,
-  recordReview,
-  getDailyStats,
-  initQuestion,
-  INTERVALS,
+  getDueReviews, recordReview, getDailyStats, initQuestion,
+  pullFromCloud, INTERVALS,
 };
