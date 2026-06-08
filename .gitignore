@@ -37,8 +37,19 @@ test-results/
 # Large data (generated, not committed)
 /public/data/*/questions.json
 
+# Miniapp node_modules
+miniapp/node_modules/
+miniapp/dist/
+
+# Archive
+archive/
+
+# Deploy ignores (keep configs)
+deploy/*.log
+
 # Claude Code (部分)
 .claude/scheduled_tasks.lock
 .claude/debug/
 .claude/sessions/
 .claude/cache/
+.github/workflows/ci.yml

@@ -1,4 +1,4 @@
-// server/index.js — 慢慢记题库管理API
+// server/index.js — 职考通题库管理API
 // 启动: node server/index.js
 // 端口: 3001 (开发) / process.env.PORT (生产)
 import express from 'express';
@@ -398,7 +398,7 @@ function getSubjectsSummary() {
 
 // ─── 启动 ───
 app.listen(PORT, () => {
-  console.log(`\n📚 慢慢记题库API 已启动`);
+  console.log(`\n📚 职考通题库API 已启动`);
   console.log(`   地址: http://localhost:${PORT}`);
   console.log(`   鉴权: ${AUTH_ENABLED ? '已启用 (x-api-key)' : '已关闭（开发模式，免鉴权）'}`);
   console.log(`   健康检查: http://localhost:${PORT}/api/health\n`);

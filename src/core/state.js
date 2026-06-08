@@ -197,7 +197,7 @@ function getActiveSubjectId() {
 function setActiveSubject(subjectId) {
   _state.activeSubjectId = subjectId;
   _lastSubjectId = subjectId;
-  saveState();
+  saveNow(); // 立即持久化（避免reload前丢失）
   notify('subjectChanged', { subjectId });
 }
 

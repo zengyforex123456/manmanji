@@ -1,16 +1,49 @@
-// src/main.js — 慢慢记 V1.5 主入口
+// src/main.js — 职考通 V1.5 主入口
 import { State } from './core/state.js';
 import { DB } from './core/db.js';
 import { QuizService } from './services/quiz-service.js';
 import { QuizCard } from './components/quiz-card.js';
+import { renderMockExam } from './components/mock-exam.js';
 import { LoginPage } from './components/login.js';
 import { Analytics } from './services/analytics.js';
-import { injectAIPanels } from './components/ai-panel.js';
+import { Ebbinghaus } from './services/ebbinghaus.js';
 import './style.css';
+
+// LC chapter functions (lightweight)
+import { getSubjectMeta } from './data/subjects-meta.js';
+window.LC = window.LC || {};
+window.LC.startMistake = () => window.startMode('mistake');
+window.LC.startChapter = async (chNum) => {
+  const { QuizService } = await import('./services/quiz-service.js');
+  const { QuizCard } = await import('./components/quiz-card.js');
+  const qs = await QuizService.pickQuestions({ subjectId: State.getActiveSubjectId(), mode: 'beginner', chapter: chNum, count: 10 });
+  QuizCard.render('beginner', qs);
+};
+window.LC.showChapters = () => {
+  const section = document.getElementById('lc-chapters-section');
+  if (!section) return;
+  if (section.style.display === 'block') { section.style.display = 'none'; return; }
+  const meta = getSubjectMeta(State.getActiveSubjectId());
+  if (!meta) return;
+  section.innerHTML = `<div style="margin-bottom:8px;font-size:11px;display:flex;gap:12px;align-items:center"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#dc2626"></span> 核心必考 <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f59e0b;margin-left:4px"></span> 高频考点 <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#94a3b8;margin-left:4px"></span> 基础了解 <span style="color:#64748b;margin-left:8px;font-size:10px">点击编号刷题</span></div>` + (meta.modules || []).map(m => `
+    <div style="font-size:13px;font-weight:700;color:#334155;margin:12px 0 4px">${m.name} <span style="font-weight:400;font-size:11px;color:#94a3b8">占${Math.round(m.weight*100)}%</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      ${(m.chapters || []).map(chNum => {
+        const ch = meta.chapters.find(c => c.id === chNum);
+        if (!ch) return '';
+        const colors = {1:'#dc2626',2:'#f59e0b',3:'#94a3b8'};
+        return `<span style="display:inline-flex;align-items:center;gap:4px;padding:6px 12px;background:#fff;border:1px solid #e2e8f0;border-left:3px solid ${colors[ch.tier]||colors[3]};border-radius:8px;cursor:pointer;font-size:12px;min-height:38px" onclick="LC.startChapter(${chNum})" title="${ch.name}">
+          <b style="color:#0f766e">${chNum}</b> ${ch.name.replace(/第.+章\s*/,'').substring(0,6)}
+        </span>`;
+      }).join('')}
+    </div>
+  `).join('');
+  section.style.display = 'block';
+};
 
 // ─── 应用初始化 ───
 async function bootstrap() {
-  console.log('[App] 慢慢记 V1.5 启动中...');
+  console.log('[App] 职考通 V1.5 启动中...');
 
   // 1. 初始化状态（含崩溃恢复）
   await State.init();
@@ -24,9 +57,9 @@ async function bootstrap() {
   // 3. 检测离线状态
   setupOfflineDetection();
 
-  // 4. 渲染首页看板
-  renderDashboard();
-  setTimeout(() => injectAIPanels(), 100); // DOM渲染后注入AI面板
+  // 4. 渲染首页看板（壳立即显示，数据异步填充）
+  renderDashboardShell();
+  populateDashboardData();
 
   // 5. 检查崩溃恢复
   checkCrashRecovery();
@@ -76,20 +109,12 @@ function checkCrashRecovery() {
   }
 }
 
-// ─── 首页看板渲染 ───
-function renderDashboard() {
+// ─── 首页看板渲染（即显骨架 + 异步填数据） ───
+async function renderDashboard() { renderDashboardShell(); await populateDashboardData(); }
+function renderDashboardShell() {
   const app = document.getElementById('app');
   if (!app) return;
-
   const state = State.state;
-  const subjState = State.currentSubject();
-  const dueCount = (subjState?.ebbinghausQueue || [])
-    .filter(item => !item.nextReview || item.nextReview <= Date.now()).length;
-  const totalAnswered = state._totalQuizzes || 0;
-  const totalWrong = state.wrongQuestionsCount || 0;
-  const mastery = totalAnswered > 0
-    ? Math.round((1 - totalWrong / Math.max(totalAnswered, 1)) * 100)
-    : 0;
 
   app.innerHTML = `
     <!-- 离线指示器 -->
@@ -100,7 +125,7 @@ function renderDashboard() {
 
     <!-- 顶部导航 -->
     <nav class="top-nav">
-      <div class="nav-brand" onclick="location.reload()">慢慢记</div>
+      <div class="nav-brand" onclick="location.reload()">职考通</div>
       <div class="nav-subjects" id="nav-subjects"></div>
       <div class="nav-user" id="nav-user">
         ${state.userId
@@ -113,42 +138,55 @@ function renderDashboard() {
     <!-- 主内容区 -->
     <main class="main-content">
       <div class="welcome-row">
-        <span>👋 ${getGreeting()}，${state.userId ? '考友' : '访客'} · 🔥 ${state.daysStudied || 1}天</span>
-        <span class="exam-countdown">${state.userId ? '已登录' : '距考试 45 天'}</span>
+        <span class="welcome-text">👋 ${getGreeting()}，${state.userId ? '考友' : '访客'}</span>
+        <span class="exam-countdown">${state.userId ? '已登录' : '距考试约 6 个月'}</span>
       </div>
-
       <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-label">📋 待复习</div>
-          <div class="stat-value">${dueCount} 题</div>
+        <div class="stat-card"><div class="stat-label">📋 待复习</div><div class="stat-value" id="stat-due">-</div></div>
+        <div class="stat-card"><div class="stat-label">📊 掌握度</div><div class="stat-value" id="stat-mastery">-</div></div>
+        <div class="stat-card"><div class="stat-label">🔥 连续</div><div class="stat-value" id="stat-streak">${state.daysStudied || 1}天</div></div>
+      </div>
+      <div class="flow-guide">
+        <div class="flow-title">📖 学习流程</div>
+        <div class="flow-steps">
+          <div class="flow-step" onclick="startMode('beginner')"><div class="flow-num">1</div><div class="flow-content"><div class="flow-name">开始刷题</div><div class="flow-desc">系统自动挑选适合你的题目</div></div><div class="flow-arrow">→</div></div>
+          <div class="flow-step" onclick="LC.startMistake()"><div class="flow-num">2</div><div class="flow-content"><div class="flow-name">错题重做</div><div class="flow-desc" id="flow-mistake-count">错题会自动收集到这里</div></div><div class="flow-arrow">→</div></div>
+          <div class="flow-step" onclick="startMode('mock')"><div class="flow-num">3</div><div class="flow-content"><div class="flow-name">模拟考试</div><div class="flow-desc">105题·90分钟·全真环境</div></div></div>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">📊 掌握度</div>
-          <div class="stat-value">${mastery}%</div>
+      </div>
+      <div class="flow-guide" style="margin-top:12px"><div class="flow-title" id="show-chapters-btn" style="cursor:pointer">📚 按章节学习 ▸</div><div id="lc-chapters-section" style="display:none"></div></div>
+      <div class="flow-guide" style="margin-top:12px">
+        <div class="flow-title">🎮 自由探索</div>
+        <div class="flow-section-hint" style="font-size:11px;color:#94a3b8;margin-bottom:10px">选择你自己的学习方式，每种方式都针对不同备考需求</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div class="explore-row" onclick="startMode('advanced')">
+            <span class="explore-icon">🎲</span>
+            <span class="explore-name">随机挑战</span>
+            <span class="explore-desc">全题库随机20题</span>
+            <span class="explore-why">适合：检验综合水平</span>
+          </div>
+          <div class="explore-row" onclick="document.getElementById('custom-panel').style.display='block'">
+            <span class="explore-icon">⚙️</span>
+            <span class="explore-name">自由组卷 ▸</span>
+            <span class="explore-desc">自选数量·模式·范围</span>
+            <span class="explore-why">适合：针对性练习</span>
+          </div>
+        </div>
+        <div id="custom-panel" style="display:none;margin-top:10px;padding:12px;background:#f8fafc;border-radius:10px">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select id="custom-count" style="padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;min-width:70px">
+              <option value="10">10题</option><option value="20" selected>20题</option><option value="50">50题</option><option value="105">105题</option>
+            </select>
+            <select id="custom-mode" style="padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;flex:1;min-width:150px">
+              <option value="beginner">新手（每题看解析）</option>
+              <option value="advanced" selected>进阶（做完看结果）</option>
+              <option value="mock">模考（限时90分钟）</option>
+            </select>
+            <button class="mode-btn" onclick="startCustomExam()" style="padding:8px 20px">开始</button>
+          </div>
         </div>
       </div>
-
-      <button class="cta-primary" onclick="startLearning()">
-        📝 开始刷题 · 经济基础·第2章
-      </button>
-
-      <div class="mode-grid">
-        <button class="mode-btn" onclick="startMode('beginner')">🎯 新手 10题</button>
-        <button class="mode-btn" onclick="startMode('advanced')">🔥 进阶 20题</button>
-        <button class="mode-btn" onclick="startMode('mock')">⏱️ 模考 105题</button>
-        <button class="mode-btn" onclick="startMode('mistake')">📖 错题重做</button>
-      </div>
-
-      <div class="recent-section" id="recent-section">
-        <div class="section-title">最近学习</div>
-        <div id="recent-list" style="color:var(--text-secondary);font-size:13px;">暂无学习记录</div>
-      </div>
-
-      <div class="bottom-actions">
-        <button class="text-btn" onclick="showFeedback()">💬 问题反馈</button>
-        <span style="color:var(--border-color);">|</span>
-        <button class="text-btn" onclick="togglePhonePreview()">📱 小程序预览</button>
-      </div>
+      <div style="text-align:center;margin-top:20px"><button class="text-btn" onclick="showFeedback()">💬 问题反馈</button></div>
     </main>
 
     <!-- 手机仿真器 -->
@@ -162,6 +200,173 @@ function renderDashboard() {
   `;
 
   renderSubjectNav();
+
+  // 绑定章节学习点击事件（避免onclick在HMR下失效）
+  setTimeout(() => {
+    const chapBtn = document.querySelector('#show-chapters-btn');
+    if (chapBtn) chapBtn.addEventListener('click', () => window.LC?.showChapters());
+  }, 100);
+}
+
+async function populateDashboardData() {
+  try {
+    const stats = await Ebbinghaus.getDailyStats();
+    const progress = await DB.getProgress(State.getActiveSubjectId());
+    let wrong = 0;
+    const chWrong = {}, chTotal = {};
+    progress.forEach(p => {
+      if (p.wrongCount > 0) wrong++;
+      const ch = p.chapter || 0;
+      if (ch > 0) { chWrong[ch] = (chWrong[ch]||0) + (p.wrongCount>0?1:0); chTotal[ch] = (chTotal[ch]||0) + 1; }
+    });
+    const total = stats.totalInQueue || 0;
+    const mastery = total >= 50 ? Math.round((total - wrong) / total * 100) : total > 0 ? Math.round((1 - wrong/total)*100) : 0;
+
+    // 🧠 用户画像：千人千面核心
+    const profile = buildProfile(total, wrong, mastery, stats, chWrong, chTotal, progress);
+
+    // 更新统计数字
+    const dueEl = document.getElementById('stat-due');
+    const masteryEl = document.getElementById('stat-mastery');
+    if (dueEl) dueEl.textContent = stats.dueToday + ' 题';
+    if (masteryEl) masteryEl.textContent = mastery + '%';
+
+    // 更新错题数
+    const mistakeEl = document.getElementById('flow-mistake-count');
+    if (mistakeEl) mistakeEl.textContent = wrong > 0 ? `${wrong} 道错题待重做` : '暂无错题，继续加油';
+
+    // 🧠 千人千面：profile驱动全部推荐文案
+    applyProfile(profile);
+
+    // 更新欢迎行 + 连续打卡
+    const state = State.state;
+    const welcomeSpan = document.querySelector('.welcome-text');
+    const streakEl = document.getElementById('stat-streak');
+    if (welcomeSpan) {
+      const name = state.userId ? (state.userId.length > 8 ? '考友' : state.userId.slice(-4)) : '访客';
+      welcomeSpan.innerHTML = `👋 ${getGreeting()}，${name}`;
+    }
+    const today = new Date().toDateString();
+    const lastStudy = localStorage.getItem('mmj_last_study_date');
+    const newStreak = lastStudy !== today ? (state.daysStudied || 0) + 1 : (state.daysStudied || 1);
+    if (lastStudy !== today) {
+      state.daysStudied = newStreak;
+      localStorage.setItem('mmj_last_study_date', today);
+      State.saveNow();
+    }
+    if (streakEl) streakEl.textContent = newStreak + '天';
+    if (cdSpan) {
+      const examDate = localStorage.getItem('mmj_exam_date');
+      if (examDate) {
+        const days = Math.ceil((new Date(examDate) - new Date()) / 86400000);
+        cdSpan.textContent = days > 0 ? `距考试 ${days} 天` : '考试已结束';
+      } else {
+        cdSpan.textContent = state.userId ? '已登录' : '距考试约 6 个月';
+      }
+    }
+  } catch(e) { console.warn('[Dashboard] data fill failed:', e); }
+}
+
+// 🧠 用户画像构建
+function buildProfile(total, wrong, mastery, stats, chWrong, chTotal, progress) {
+  let level, icon, style;
+  if (total === 0) { level = '新手'; icon = '🌱'; style = 'color:#0f766e'; }
+  else if (total < 50) { level = '入门'; icon = '🌿'; style = 'color:#0f766e'; }
+  else if (total < 200) { level = '进阶'; icon = '🌳'; style = 'color:#b45309'; }
+  else if (total < 500) { level = '熟练'; icon = '🎯'; style = 'color:#0f766e'; }
+  else { level = '冲刺'; icon = '🚀'; style = 'color:#dc2626'; }
+
+  // 弱项Top3
+  const weakList = Object.entries(chWrong)
+    .filter(([ch, w]) => (chTotal[ch]||0) >= 3)
+    .sort((a,b) => b[1] - a[1]).slice(0,3).map(([ch]) => parseInt(ch));
+
+  // SM-2盒子分布
+  const boxes = [0,0,0,0,0];
+  let dueCount = 0;
+  progress.forEach(p => {
+    const b = (p.box || 1) - 1;
+    if (b >= 0 && b < 5) boxes[b]++;
+    if (p.nextReview && p.nextReview <= Date.now()) dueCount++;
+  });
+
+  // 学习风格推断
+  let style2 = '';
+  if (total > 50) {
+    const multiRatio = progress.filter(p => p._type === 'multiple').length / total;
+    if (mastery > 70 && total > 200) style2 = '稳健型';
+    else if (multiRatio > 0.3 && mastery < 60) style2 = '多选薄弱型';
+    else if (dueCount > total * 0.3) style2 = '需加强复习';
+    else style2 = '均衡发展';
+  }
+
+  return { level, icon, levelStyle: style, total, wrong, mastery, weakList, boxes, dueCount, style2 };
+}
+
+// 🧠 千人千面：驱动UI
+function applyProfile(p) {
+  // 欢迎行增加等级
+  const welcomeEl = document.querySelector('.welcome-text');
+  if (welcomeEl && p.level) {
+    const cur = welcomeEl.innerHTML;
+    if (!cur.includes('·')) welcomeEl.innerHTML = cur + ` · <span style="${p.levelStyle}">${p.icon} ${p.level}</span>`;
+  }
+
+  // 学习流程个性化
+  const stepDescs = document.querySelectorAll('.flow-step .flow-desc');
+  const stepNames = document.querySelectorAll('.flow-step .flow-name');
+  const stepNums = document.querySelectorAll('.flow-step .flow-num');
+
+  if (stepDescs.length >= 3) {
+    // Step 1: 根据等级推荐
+    const step1Map = {
+      '新手': ['从高频考点开始', '#0f766e'],
+      '入门': ['巩固基础章节', '#0f766e'],
+      '进阶': p.weakList.length>0 ? [`第${p.weakList[0]}章需加强`,'#f59e0b'] : ['混合练习提升', '#0f766e'],
+      '熟练': p.dueCount>0 ? [`${p.dueCount}题待复习，优先`,'#dc2626'] : ['模拟考试检验水平','#0f766e'],
+      '冲刺': ['全真模考冲刺','#dc2626'],
+    };
+    const [t1, c1] = step1Map[p.level] || ['开始学习','#64748b'];
+    stepDescs[0].textContent = t1; stepDescs[0].style.color = c1;
+    if (stepNums[0]) {
+      stepNums[0].style.background = c1;
+      stepNames[0].textContent = p.level === '冲刺' ? '冲刺模考' : p.level === '熟练' ? '复习巩固' : '开始刷题';
+    }
+
+    // Step 2: 错题
+    const [t2, c2] = p.wrong > 10 ? [`${p.wrong}道错题，建议优先攻克`,'#dc2626'] : p.wrong > 0 ? [`${p.wrong}道错题可重做`,'#f59e0b'] : ['暂无错题','#64748b'];
+    stepDescs[1].textContent = t2; stepDescs[1].style.color = c2;
+
+    // Step 3: 模考 — 根据等级
+    const step3Map = {
+      '新手': ['建议先刷够50题再来','#94a3b8'],
+      '入门': ['再刷'+(50-p.total)+'题可解锁','#94a3b8'],
+      '进阶': p.total>=100?['可以尝试模考检验','#0f766e']:['再刷'+(100-p.total)+'题解锁模考','#94a3b8'],
+      '熟练': ['105题·90分钟·全真环境','#0f766e'],
+      '冲刺': ['严格计时·查漏补缺','#dc2626'],
+    };
+    const [t3, c3] = step3Map[p.level] || ['105题·90分钟·全真环境','#64748b'];
+    stepDescs[2].textContent = t3; stepDescs[2].style.color = c3;
+    // 低等级把模考按钮置灰提示
+    const step3El = document.querySelectorAll('.flow-step')[2];
+    if (step3El && (p.level === '新手' || p.level === '入门')) {
+      step3El.style.opacity = '0.5';
+      step3El.style.pointerEvents = 'none';
+    }
+  }
+
+  // 章节弱项高亮
+  if (p.weakList.length > 0) {
+    const chips = document.querySelectorAll('#lc-chapters-section span[onclick]');
+    chips.forEach(chip => {
+      const onclick = chip.getAttribute('onclick') || '';
+      const m = onclick.match(/LC\.startChapter\((\d+)\)/);
+      if (m && p.weakList.includes(parseInt(m[1]))) {
+        chip.style.boxShadow = '0 0 0 2px #f59e0b';
+        chip.style.fontWeight = '700';
+      }
+    });
+  }
 }
 
 function renderSubjectNav() {
@@ -198,6 +403,9 @@ window.startLearning = function() {
 
 window.startMode = async function(mode) {
   State.trackEvent('mode_started', { mode, subjectId: State.getActiveSubjectId() });
+  // 立即显示加载状态
+  const app = document.getElementById('app');
+  if (app) app.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh"><div style="text-align:center"><div style="font-size:48px;margin-bottom:16px">📚</div><div style="font-size:16px;font-weight:700">题目加载中…</div></div></div>';
   const countMap = { beginner: 10, advanced: 20, mock: 105, mistake: 999 };
   const count = countMap[mode] || 10;
   try {
@@ -206,7 +414,11 @@ window.startMode = async function(mode) {
       mode,
       count,
     });
-    QuizCard.render(mode, questions);
+    if (mode === 'mock') {
+      renderMockExam(mode, questions);
+    } else {
+      QuizCard.render(mode, questions);
+    }
   } catch (e) {
     console.error('[App] startMode failed:', e);
     alert('题库加载失败，请刷新页面后重试');
@@ -224,7 +436,7 @@ window.showFeedback = function() {
   if (!app) return;
   app.innerHTML = `
     <nav class="top-nav">
-      <div class="nav-brand" onclick="location.reload()">慢慢记</div>
+      <div class="nav-brand" onclick="location.reload()">职考通</div>
       <span style="font-weight:600">问题反馈</span>
     </nav>
     <main class="main-content">
@@ -286,4 +498,27 @@ window.loadAIAnalysis = async function() {
 };
 
 // ─── 启动 ───
+
+// R24 SW + R37 Onboarding
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => { navigator.serviceWorker.register("/sw.js").catch(() => {}); });
+}
+import("./components/onboarding.js").then(m => { setTimeout(() => m.maybeShowOnboarding(), 800); });
+
+
+// ─── SPA导航（无刷新返回首页，即时渲染） ───
+window.startCustomExam = function() {
+  const count = parseInt(document.getElementById('custom-count')?.value || 20);
+  const mode = document.getElementById('custom-mode')?.value || 'advanced';
+  startMode(mode === 'mock' ? 'mock' : mode, count);
+};
+window.goHome = function() {
+  const app = document.getElementById("app");
+  if (!app) return;
+  app.innerHTML = '';
+  renderDashboardShell();
+  populateDashboardData();
+  setTimeout(() => { injectAIPanels(); renderLearningCenter(); }, 50);
+};
+
 document.addEventListener('DOMContentLoaded', bootstrap);

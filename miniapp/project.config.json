@@ -1,0 +1,11 @@
+{
+  "projectName": "职考通备考",
+  "miniprogramRoot": "dist/",
+  "compileType": "miniprogram",
+  "appid": "touristappid",
+  "setting": {
+    "es6": true,
+    "enhance": true,
+    "minified": true
+  }
+}

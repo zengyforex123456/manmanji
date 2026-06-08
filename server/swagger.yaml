@@ -1,0 +1,120 @@
+# server/swagger.yaml
+openapi: 3.0.3
+info:
+  title: Kaoshi API
+  version: 1.0.0
+  description: 考试题库管理系统 API
+servers:
+  - url: http://localhost:{port}
+    description: 本地开发服务器
+    variables:
+      port:
+        default: "3001"
+paths:
+  /api/auth/login-phone:
+    post:
+      summary: 手机号登录（开发模式返回模拟 token）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, code]
+              properties:
+                phone:
+                  type: string
+                code:
+                  type: string
+      responses:
+        '200':
+          description: 登录成功
+        '401':
+          description: 登录失败
+  /api/questions/{subjectId}/count:
+    get:
+      summary: 获取科目题目总数
+      parameters:
+        - name: subjectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 返回计数
+  /api/questions/batch:
+    post:
+      summary: 批量上传题目（JWT + AJV 验证）
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchUpload'
+      responses:
+        '200':
+          description: 上传成功
+        '400':
+          description: 参数校验错误
+        '401':
+          description: 鉴权失败
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    BatchUpload:
+      type: object
+      required: [subjectId, questions]
+      properties:
+        subjectId:
+          type: string
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Question'
+    Question:
+      type: object
+      required: [id, stem, type, options, answer]
+      properties:
+        id:
+          type: string
+        stem:
+          type: string
+        type:
+          type: string
+          enum: [single, multiple, case]
+        options:
+          type: array
+          minItems: 2
+          items:
+            type: string
+        answer:
+          type: string
+        difficulty:
+          type: integer
+          minimum: 1
+          maximum: 5
+        analysis:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        module:
+          type: string
+        chapter:
+          type: integer
+        mnemonic:
+          type: string
+        newContent:
+          type: boolean
+        accuracy:
+          type: number
+        source:
+          type: string

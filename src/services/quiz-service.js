@@ -39,24 +39,46 @@ function calculateWeight(question, progress) {
   return weight;
 }
 
-// ─── 加载题库 ───
+// ─── 加载题库（API按需 + IndexedDB缓存 + 后台全量同步） ───
+const API = 'http://localhost:3001';
+let _fullLoadStarted = {};
+
 async function loadSubject(subjectId) {
+  // 1. IndexedDB 缓存 → 秒开
   const cached = await DB.getQuestionsBySubject(subjectId);
-  if (cached && cached.length > 0) {
-    return cached;
-  }
-  // 从public/data加载
+  if (cached && cached.length > 0) return cached;
+
+  // 2. 首次：API 取小批量 → 立即返回 → 后台同步全量
   try {
-    const resp = await fetch(`/data/${subjectId}/questions.json`);
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const questions = await resp.json();
-    await DB.putQuestions(subjectId, questions);
-    return questions;
-  } catch (e) {
-    console.error('[Quiz] Load failed:', e);
-    const cached2 = await DB.getQuestionsBySubject(subjectId);
-    return cached2 || [];
-  }
+    const resp = await fetch(`${API}/api/questions/${subjectId}?limit=2000`);
+    if (resp.ok) {
+      const data = await resp.json();
+      const questions = data.questions || [];
+      // 后台异步加载全量到IndexedDB（不阻塞返回）
+      if (!_fullLoadStarted[subjectId]) {
+        _fullLoadStarted[subjectId] = true;
+        setTimeout(async () => {
+          try {
+            const fullResp = await fetch(`${API}/api/questions/${subjectId}?limit=100000`);
+            if (fullResp.ok) {
+              const full = await fullResp.json();
+              await DB.putQuestions(subjectId, full.questions || []);
+              console.log(`[Quiz] ${subjectId}: cached ${full.questions?.length || 0} questions`);
+            }
+          } catch(e) { console.warn('[Quiz] bg sync failed:', e); }
+        }, 100);
+      }
+      return questions;
+    }
+  } catch (e) { console.warn('[Quiz] API load failed, trying static:', e); }
+
+  // 3. 兜底：快速文件
+  try {
+    const r = await fetch(`/data/${subjectId}/questions-quick.json`);
+    if (r.ok) return await r.json();
+  } catch(e) {}
+
+  return [];
 }
 
 // ─── 组卷 ───

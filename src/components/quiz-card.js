@@ -45,7 +45,7 @@ function saveAndExit() {
   Timer.stop();
   State.setLastSession(_questions[_currentIndex]?.id, _currentMode, State.getActiveSubjectId());
   State.saveNow();
-  window.location.reload();
+  window.window.goHome();
 }
 
 // ─── 渲染单题 ───
@@ -94,7 +94,8 @@ function renderQuestion(q, showFeedback = false) {
 
   app.innerHTML = `
     <nav class="top-nav">
-      <div class="nav-brand" onclick="QuizCard.saveAndExit()">慢慢记</div>
+      <span onclick="window.goHome()" style="cursor:pointer;font-size:14px;color:var(--text-secondary);margin-right:8px">← 返回</span>
+      <div class="nav-brand" onclick="QuizCard.saveAndExit()">职考通</div>
       <span style="font-weight:600;font-size:14px">${modeLabel}</span>
       ${timerHtml}
       <span style="color:var(--text-secondary);font-size:13px">${idx}/${total}</span>
@@ -212,7 +213,8 @@ function finish() {
 
   app.innerHTML = `
     <nav class="top-nav">
-      <div class="nav-brand" onclick="location.reload()">慢慢记</div>
+      <span onclick="window.goHome()" style="cursor:pointer;font-size:14px;color:var(--text-secondary);margin-right:8px">← 返回</span>
+      <div class="nav-brand" onclick="window.goHome()">职考通</div>
       <span style="font-weight:600">${_currentMode === 'mock' ? '模考成绩' : '刷题完成'}</span>
     </nav>
     <main class="main-content" style="text-align:center">
@@ -226,7 +228,7 @@ function finish() {
       ${streakHtml}
       <div class="mode-grid" style="margin-top:20px">
         <button class="mode-btn" onclick="QuizCard.retry()">🔄 再来一组</button>
-        <button class="mode-btn" onclick="location.reload()">🏠 返回首页</button>
+        <button class="mode-btn" onclick="window.goHome()">🏠 返回首页</button>
       </div>
     </main>
   `;
@@ -281,7 +283,7 @@ function showEmpty(mode) {
       <div style="font-size:18px;font-weight:700;margin-bottom:8px">
         ${mode === 'mistake' ? '暂无错题，继续保持！' : '暂无可用题目'}
       </div>
-      <button class="cta-primary" style="margin-top:20px" onclick="location.reload()">返回首页</button>
+      <button class="cta-primary" style="margin-top:20px" onclick="window.goHome()">返回首页</button>
     </main>
   `;
 }

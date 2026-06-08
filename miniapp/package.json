@@ -1,0 +1,23 @@
+{
+  "name": "manmanji-miniapp",
+  "version": "1.0.0",
+  "description": "职考通 - 微信小程序",
+  "scripts": {
+    "dev:weapp": "taro build --type weapp --watch",
+    "build:weapp": "taro build --type weapp"
+  },
+  "dependencies": {
+    "@tarojs/components": "^3.6.0",
+    "@tarojs/plugin-framework-react": "^3.6.40",
+    "@tarojs/runtime": "^3.6.0",
+    "@tarojs/taro": "^3.6.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "@tarojs/cli": "^3.6.0",
+    "@tarojs/webpack5-runner": "^3.6.0",
+    "@types/react": "^18.0.0",
+    "typescript": "^5.0.0"
+  }
+}

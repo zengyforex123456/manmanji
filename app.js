@@ -1,4 +1,5 @@
 // app.js - 「慢慢记」全渠道备考管理与学习系统核心引擎
+import { COURSE_DATA, DEFAULT_USER_STATE } from './data.js';
 
 // ----------------------------------
 // 1. 全局状态初始化 (State Management)

@@ -7,20 +7,32 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test": "npx vitest run",
+    "test:watch": "npx vitest",
+    "lint": "eslint . --ext .js,.ts",
+    "format": "prettier --write .",
+    "loadtest": "k6 run loadtest/k6-test.js",
     "api": "node server/index.js",
     "start": "concurrently \"npm run dev\" \"npm run api\""
   },
   "devDependencies": {
     "@playwright/test": "^1.44.0",
+    "concurrently": "^9.0.0",
     "vite": "^5.4.0",
     "vitest": "^1.6.0"
   },
   "dependencies": {
+    "@vitest/coverage-v8": "^1.6.1",
+    "compression": "^1.8.0",
     "cors": "^2.8.6",
     "dexie": "^4.0.4",
-    "express": "^5.2.1"
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "express-prom-bundle": "^7.0.0",
+    "helmet": "^7.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "pino": "^9.2.0",
+    "sqlite3": "^5.1.7",
+    "uuid": "^10.0.0"
   }
 }

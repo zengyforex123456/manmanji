@@ -1,4 +1,4 @@
-/* style.css — 慢慢记 V1.5 单栏布局（继承原版设计系统） */
+/* style.css — 职考通 V1.5 单栏布局（继承原版设计系统） */
 
 /* ─── 复用原版设计令牌 ─── */
 :root {
@@ -24,6 +24,35 @@
   --transition-fast: 0.15s ease;
   --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* ---- Dark / Light Theme ---- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-pc: #111827;
+    --panel-pc: #1e1e1e;
+    --text-primary: #e5e7eb;
+    --text-secondary: #9ca3af;
+    --border-color: #374151;
+  }
+}
+
+html[data-theme="dark"] {
+  --bg-pc: #111827;
+  --panel-pc: #1e1e1e;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --border-color: #374151;
+}
+
+html[data-theme="light"] {
+  --bg-pc: #f1f5f9;
+  --panel-pc: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --border-color: #cbd5e1;
+}
+
+body { transition: background-color var(--transition-normal), color var(--transition-normal); }
 
 /* ─── 护眼模式 ─── */
 .eye-protect {
@@ -120,9 +149,10 @@ body {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(12px);
   padding: 20px;
   text-align: center;
-  transition: box-shadow var(--transition-fast);
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 .stat-card:hover { box-shadow: var(--shadow-md); }
 .stat-label { font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
@@ -130,6 +160,38 @@ body {
 
 /* ─── 主行动按钮 ─── */
 .cta-primary {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  min-height: 60px;
+  border-radius: var(--radius-md);
+  font-size: 18px;
+  font-weight: 800;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-fast), transform var(--transition-fast);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+}
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  transform: scale(0);
+  animation: ripple 600ms linear;
+  pointer-events: none;
+}
+@keyframes ripple {
+  to { transform: scale(4); opacity: 0; }
+}
+
   width: 100%;
   min-height: 60px;
   border-radius: var(--radius-md);
@@ -162,6 +224,21 @@ body {
   margin-bottom: 24px;
 }
 .mode-btn {
+  position: relative;
+  overflow: hidden;
+  min-height: 48px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--panel-pc);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+}
+
   min-height: 48px;
   border: 2px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -175,6 +252,11 @@ body {
   color: var(--text-primary);
 }
 .mode-btn:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
   border-color: var(--accent);
   box-shadow: var(--shadow-md);
   color: var(--accent);
@@ -298,13 +380,108 @@ body {
   .nav-subject-item { padding: 4px 10px; font-size: 12px; }
 }
 
+
+
+
+
+/* ═══ 学习流程引导 ═══ */
+.flow-guide{background:#fff;border-radius:16px;padding:20px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.flow-title{font-size:15px;font-weight:800;color:#0f172a;margin-bottom:16px}
+.flow-steps{display:flex;flex-direction:column;gap:10px}
+.flow-step{display:flex;align-items:center;gap:14px;padding:14px 16px;background:#f8fafc;border-radius:12px;cursor:pointer;transition:all .15s;border:2px solid transparent;min-height:60px}
+.flow-step:hover{border-color:#0f766e;background:#f0fdf4;transform:translateX(4px)}
+.flow-num{width:36px;height:36px;line-height:36px;text-align:center;background:#0f766e;color:#fff;border-radius:50%;font-size:16px;font-weight:800;flex-shrink:0}
+.flow-content{flex:1}
+.flow-name{font-size:15px;font-weight:700;color:#0f172a;margin-bottom:2px}
+.flow-desc{font-size:12px;color:#64748b}
+.flow-arrow{font-size:18px;color:#cbd5e1;flex-shrink:0}.flow-section-hint{font-size:11px;color:#94a3b8;margin-bottom:10px}
+.explore-row{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f8fafc;border-radius:10px;cursor:pointer;transition:all .15s;border:2px solid transparent;min-height:48px}
+.explore-row:hover{border-color:#0f766e;background:#f0fdf4;transform:translateX(4px)}
+.explore-icon{font-size:22px;flex-shrink:0}
+.explore-name{font-size:14px;font-weight:700;color:#0f172a;flex-shrink:0;min-width:60px}
+.explore-desc{font-size:12px;color:#64748b;flex:1}
+.explore-why{font-size:10px;color:#94a3b8;flex-shrink:0;text-align:right}
+
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr)}
+/* ═══ 极简学习中心 ═══ */
+.lc-section{margin-bottom:20px}
+.lc-section-title{font-size:16px;font-weight:800;color:#0f172a;margin-bottom:2px}
+.lc-section-hint{font-size:12px;color:#94a3b8;margin-bottom:12px;line-height:1.5}
+.lc-quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lc-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;cursor:pointer;transition:all .15s;min-height:80px;display:flex;flex-direction:column;justify-content:center}
+.lc-card:hover{border-color:#0f766e;box-shadow:0 2px 12px rgba(0,0,0,.08);transform:translateY(-2px)}
+.lc-card-main{background:linear-gradient(135deg,#f0fdf4,#e6f7f5);border-color:#0f766e;border-width:2px}
+.lc-card-icon{font-size:24px;margin-bottom:4px}
+.lc-card-title{font-size:14px;font-weight:700;color:#0f172a;margin-bottom:2px}
+.lc-card-desc{font-size:11px;color:#64748b;line-height:1.4}
+.lc-recommend-shell .lc-card-desc{color:#0f766e}
+.lc-chapter-row{display:flex;flex-wrap:wrap;gap:8px}
+.lc-chapter-chip{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:13px;transition:all .15s;min-height:38px}
+.lc-chapter-chip:hover{border-color:#0f766e;background:#f0fdf4}
+.chip-num{font-weight:800;color:#0f766e;font-size:11px}
+.chip-name{color:#334155;font-weight:500;font-size:12px}
+.lc-empty-hint{text-align:center;padding:20px;font-size:12px;color:#94a3b8;line-height:1.8;background:#fff;border-radius:12px;border:1px dashed #cbd5e1;margin-top:16px}
+.lc-module-name{font-weight:700;font-size:13px;color:#334155;margin:12px 0 4px}
+/* ═══ 全屏模拟考试 ═══ */
+.mock-container{display:grid;grid-template-columns:220px 1fr 240px;height:100vh;background:#f1f5f9;overflow:hidden}
+.mock-nav{background:#fff;border-right:1px solid #e2e8f0;padding:16px;overflow-y:auto}
+.mock-nav-title{font-size:13px;font-weight:800;color:#475569;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e2e8f0}
+.mock-nav-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.nav-num{width:32px;height:32px;line-height:32px;text-align:center;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;background:#f1f5f9;color:#64748b;transition:all .15s}
+.nav-num.answered{background:#22c55e;color:#fff}
+.nav-num.marked{box-shadow:0 0 0 2px #f59e0b}
+.nav-num.current{background:#0f766e!important;color:#fff!important;transform:scale(1.15)}
+.mock-nav-legend{font-size:11px;color:#94a3b8;display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:8px}
+.legend-dot{width:12px;height:12px;border-radius:3px;display:inline-block;background:#f1f5f9;border:1px solid #cbd5e1}
+.legend-dot.answered{background:#22c55e;border-color:#22c55e}
+.legend-dot.marked{border-color:#f59e0b;box-shadow:0 0 0 1px #f59e0b}
+.legend-dot.current{background:#0f766e;border-color:#0f766e}
+.mock-main{background:#fff;padding:32px 40px;overflow-y:auto}
+.mock-question-header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.mock-q-num{font-size:15px;font-weight:800;color:#0f766e}
+.mock-q-type{font-size:12px;font-weight:700;background:#f0fdf4;color:#0f766e;padding:3px 12px;border-radius:4px}
+.mock-q-chapter{font-size:12px;color:#64748b}
+.mock-mark-btn{margin-left:auto;font-size:13px;cursor:pointer;padding:6px 14px;border:1px solid #cbd5e1;border-radius:6px;color:#475569}
+.mock-mark-btn:hover{border-color:#f59e0b;color:#f59e0b}
+.mock-stem{font-size:18px;font-weight:600;line-height:1.9;color:#0f172a;padding:20px 24px;background:#f8fafc;border-radius:12px;border-left:4px solid #0f766e;margin-bottom:24px}
+.mock-options{display:flex;flex-direction:column;gap:10px}
+.mock-option{display:flex;align-items:center;gap:14px;padding:14px 18px;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:15px;transition:all .15s;min-height:52px}
+.mock-option:hover{border-color:#0f766e;background:#f0fdf4}
+.mock-option.selected{border-color:#0f766e;background:#f0fdf4}
+.mock-option-key{width:30px;height:30px;line-height:30px;text-align:center;font-weight:800;font-size:14px;border-radius:50%;background:#f1f5f9;color:#475569;flex-shrink:0}
+.mock-option.selected .mock-option-key{background:#0f766e;color:#fff}
+.mock-nav-btns{display:flex;justify-content:space-between;align-items:center;margin-top:32px;padding-top:16px;border-top:1px solid #e2e8f0}
+.mock-btn{padding:10px 24px;border:2px solid #cbd5e1;border-radius:8px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-sans)}
+.mock-btn:hover:not(:disabled){border-color:#0f766e;color:#0f766e}
+.mock-btn:disabled{opacity:0.4;cursor:default}
+.mock-q-progress{font-size:13px;color:#64748b;font-weight:600}
+.mock-info{background:#fff;border-left:1px solid #e2e8f0;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+.mock-info-card{background:#f8fafc;border-radius:10px;padding:14px}
+.mock-timer-label{font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.mock-timer{font-size:36px;font-weight:800;color:#0f172a;text-align:center;margin:8px 0}
+.mock-timer.timer-warning{color:#dc2626!important;animation:pulse .5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.mock-progress-label{font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.mock-progress-bar{height:8px;background:#e2e8f0;border-radius:4px;margin-bottom:6px}
+.mock-progress-fill{height:100%;background:#0f766e;border-radius:4px;transition:width .3s}
+.mock-progress-text{font-size:12px;color:#64748b;text-align:center}
+.mock-stat-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0}
+.mock-submit-btn{width:100%;padding:14px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:800;cursor:pointer;margin-top:auto}
+.mock-submit-btn:hover{background:#b91c1c}
+.mock-fullscreen-warn{background:#fef3c7;border-bottom:2px solid #f59e0b;padding:8px 16px;text-align:center;font-size:13px;display:flex;justify-content:center;align-items:center;gap:12px}
+.mock-fullscreen-warn button{padding:4px 12px;background:#f59e0b;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px}
+.mock-answer-mini-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px}
+.mini-item{width:20px;height:20px;line-height:20px;text-align:center;font-size:10px;font-weight:600;border-radius:3px;cursor:pointer;background:#f1f5f9;color:#64748b}
+.mini-item.answered{background:#22c55e;color:#fff}
+.mini-item.marked{box-shadow:0 0 0 1.5px #f59e0b}
+.mini-item.current{background:#0f766e;color:#fff}
+.mock-result-card{text-align:center;background:#fff;border-radius:16px;padding:32px;box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.mock-score{font-size:64px;font-weight:800;color:#0f766e}
+.mock-score-detail{font-size:14px;color:#64748b;margin-top:4px}
+@media(max-width:1024px){.mock-container{grid-template-columns:1fr}.mock-nav,.mock-info{display:none}}
+
 /* ─── reduced-motion ─── */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
-}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
 /* ═══════════════════════════════════════════════
    Phase 2: 刷题界面样式
@@ -352,6 +529,23 @@ body {
   margin-bottom: 20px;
 }
 .option-btn {
+  position: relative;
+  overflow: hidden;
+  min-height: 52px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--panel-pc);
+  font-size: 16px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
   min-height: 52px;
   width: 100%;
   padding: 12px 16px;

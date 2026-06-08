@@ -12,11 +12,11 @@ function render(onSuccess) {
 
   app.innerHTML = `
     <nav class="top-nav">
-      <div class="nav-brand" onclick="location.reload()">慢慢记</div>
+      <div class="nav-brand" onclick="location.reload()">职考通</div>
     </nav>
     <main class="main-content" style="max-width:420px;text-align:center">
       <div style="font-size:32px;margin:32px 0 8px">🔐</div>
-      <div style="font-size:20px;font-weight:800;margin-bottom:24px">登录慢慢记</div>
+      <div style="font-size:20px;font-weight:800;margin-bottom:24px">登录职考通</div>
       <div style="font-size:13px;color:var(--text-secondary);margin-bottom:24px">登录后可跨设备同步学习进度</div>
 
       <!-- 手机号登录 -->

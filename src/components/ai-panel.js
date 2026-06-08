@@ -1,5 +1,6 @@
 // src/components/ai-panel.js — AI面板注入器
 import { Analytics } from '../services/analytics.js';
+import { renderRadarChart } from './radar-chart.js';
 
 export function injectAIPanels() {
   const container = document.getElementById('recent-section');
@@ -14,6 +15,14 @@ export function injectAIPanels() {
     <div id="ai-insights-content" style="font-size:13px;color:var(--text-secondary);line-height:1.6">完成一组刷题后查看分析</div>
   `;
   container.after(insights);
+
+  // 雷达图
+  const radar = document.createElement('div');
+  radar.className = 'recent-section';
+  radar.style.marginTop = '16px';
+  radar.innerHTML = '<div class="section-title">📊 章节掌握度</div><div id="radar-container"></div>';
+  insights.after(radar);
+  setTimeout(() => renderRadarChart(), 200);
 
   // 智能问答
   const qa = document.createElement('div');
