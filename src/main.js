@@ -187,7 +187,10 @@ function renderDashboardShell() {
           </div>
         </div>
       </div>
-      <div style="text-align:center;margin-top:20px"><button class="text-btn" onclick="showFeedback()">💬 问题反馈</button></div>
+      <div style="text-align:center;margin-top:20px;display:flex;justify-content:center;gap:16px;flex-wrap:wrap">
+        <button class="text-btn" onclick="showFeedback()">💬 问题反馈</button>
+        <a href="https://wj.qq.com/" target="_blank" class="text-btn" style="text-decoration:none">📋 建议问卷</a>
+      </div>
     </main>
 
     <!-- 手机仿真器 -->
