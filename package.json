@@ -13,7 +13,11 @@
     "format": "prettier --write .",
     "loadtest": "k6 run loadtest/k6-test.js",
     "api": "node server/index.js",
-    "start": "concurrently \"npm run dev\" \"npm run api\""
+    "start": "concurrently \"npm run dev\" \"npm run api\"",
+    "analyze": "node scripts/run-all-analysis.cjs",
+    "analyze:users": "node scripts/analyze-users.cjs",
+    "analyze:marketing": "node scripts/analyze-marketing.cjs",
+    "analyze:ab": "node scripts/ab-test-validator.cjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.44.0",
