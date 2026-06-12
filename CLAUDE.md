@@ -48,3 +48,12 @@ d:\project\kaoshi/
 - 覆盖已有文件前需显式确认
 - 禁止引入 jQuery / Bootstrap 3-4
 - 支付相关代码需额外安全审查
+
+## 智策分析引擎（用户数据分析 + 营销 + 持续改善）
+
+触发词：
+- `分析用户` `用户数据` `优化建议` → `.claude/rules/zhice-analyze-users.md` — 用户行为分析+产品优化
+- `营销推广` `获客` `怎么推广` → `.claude/rules/zhice-marketing.md` — 渠道选择+内容策略+投放方案
+- `改善功能` `数据驱动` `A/B测试` → `.claude/rules/zhice-optimize-loop.md` — ICE优先级+A/B测试+闭环验证
+
+数据来源: `data/metrics.json`(行为埋点) + `data/feedback.json`(用户反馈) + `data/users.json`(用户数据)
