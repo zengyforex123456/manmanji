@@ -1,0 +1,11 @@
+{
+  "test": 1,
+  "user:persist-test": {
+    "username": "persist-test",
+    "phone": "user:persist-test",
+    "passwordHash": "744829baa1a30e7796303e19caa03038e11ef3bc2583ad861676a90eb7d291a2",
+    "nickName": "persist-test",
+    "createdAt": "2026-06-08T12:39:20.852Z",
+    "membershipTier": "vip"
+  }
+}

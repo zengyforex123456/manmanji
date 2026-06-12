@@ -1,0 +1,226 @@
+[
+  {
+    "event": "session_start",
+    "data": {},
+    "timestamp": 1,
+    "serverTime": "2026-06-08T12:46:12.066Z"
+  },
+  {
+    "event": "question_answered",
+    "data": {
+      "correct": false,
+      "tags": [
+        "����۸���",
+        "�ڶ���"
+      ]
+    },
+    "timestamp": 2,
+    "serverTime": "2026-06-08T12:46:12.068Z"
+  },
+  {
+    "event": "session_start",
+    "data": {
+      "timestamp": 1780922795087,
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+      "dbAvailable": true
+    },
+    "timestamp": 1780922795087,
+    "serverTime": "2026-06-08T12:47:34.686Z"
+  },
+  {
+    "event": "session_start",
+    "data": {
+      "timestamp": 1780922840365,
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+      "dbAvailable": true
+    },
+    "timestamp": 1780922840365,
+    "serverTime": "2026-06-08T12:47:34.686Z"
+  },
+  {
+    "event": "mode_started",
+    "data": {
+      "mode": "beginner",
+      "subjectId": "econ"
+    },
+    "timestamp": 1780922843543,
+    "serverTime": "2026-06-08T12:47:34.686Z"
+  },
+  {
+    "event": "question_answered",
+    "data": {
+      "questionId": "econ-q00002",
+      "mode": "beginner",
+      "correct": false,
+      "quality": 2
+    },
+    "timestamp": 1780922844784,
+    "serverTime": "2026-06-08T12:47:34.686Z"
+  },
+  {
+    "event": "question_answered",
+    "data": {
+      "questionId": "econ-q00014",
+      "mode": "beginner",
+      "correct": false,
+      "quality": 2
+    },
+    "timestamp": 1780922846657,
+    "serverTime": "2026-06-08T12:47:34.686Z"
+  },
+  {
+    "event": "question_answered",
+    "data": {
+      "questionId": "econ-q00015",
+      "mode": "beginner",
+      "correct": true,
+      "quality": 4
+    },
+    "timestamp": 1780922848287,
+    "serverTime": "2026-06-08T12:47:34.686Z"
+  },
+  {
+    "event": "question_answered",
+    "data": {
+      "questionId": "econ-q00021",
+      "mode": "beginner",
+      "correct": false,
+      "quality": 2
+    },
+    "timestamp": 1780922849927,
+    "serverTime": "2026-06-08T12:47:34.686Z"
+  },
+  {
+    "event": "question_answered",
+    "data": {
+      "questionId": "econ-q00028",
+      "mode": "beginner",
+      "correct": false,
+      "quality": 2
+    },
+    "timestamp": 1780922851255,
+    "serverTime": "2026-06-08T12:47:34.686Z"
+  },
+  {
+    "event": "question_answered",
+    "data": {
+      "questionId": "econ-q00030",
+      "mode": "beginner",
+      "correct": false,
+      "quality": 2
+    },
+    "timestamp": 1780922852848,
+    "serverTime": "2026-06-08T12:47:34.686Z"
+  },
+  {
+    "event": "question_answered",
+    "data": {
+      "questionId": "econ-q00035",
+      "mode": "beginner",
+      "correct": false,
+      "quality": 2
+    },
+    "timestamp": 1780922854681,
+    "serverTime": "2026-06-08T12:47:34.686Z"
+  },
+  {
+    "event": "question_answered",
+    "data": {
+      "questionId": "econ-q00036",
+      "mode": "beginner",
+      "correct": true,
+      "quality": 4
+    },
+    "timestamp": 1780922856713,
+    "serverTime": "2026-06-08T12:50:24.475Z"
+  },
+  {
+    "event": "question_answered",
+    "data": {
+      "questionId": "econ-q00040",
+      "mode": "beginner",
+      "correct": false,
+      "quality": 2
+    },
+    "timestamp": 1780922858531,
+    "serverTime": "2026-06-08T12:50:24.475Z"
+  },
+  {
+    "event": "question_answered",
+    "data": {
+      "questionId": "econ-q00050",
+      "mode": "beginner",
+      "correct": false,
+      "quality": 2
+    },
+    "timestamp": 1780922860136,
+    "serverTime": "2026-06-08T12:50:24.475Z"
+  },
+  {
+    "event": "mode_completed",
+    "data": {
+      "mode": "beginner",
+      "score": 2,
+      "totalTime": 0
+    },
+    "timestamp": 1780922860902,
+    "serverTime": "2026-06-08T12:50:24.475Z"
+  },
+  {
+    "event": "session_start",
+    "data": {
+      "timestamp": 1780922884311,
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+      "dbAvailable": true
+    },
+    "timestamp": 1780922884311,
+    "serverTime": "2026-06-08T12:50:24.475Z"
+  },
+  {
+    "event": "session_start",
+    "data": {
+      "timestamp": 1780922891305,
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+      "dbAvailable": true
+    },
+    "timestamp": 1780922891305,
+    "serverTime": "2026-06-08T12:50:24.475Z"
+  },
+  {
+    "event": "mode_started",
+    "data": {
+      "mode": "mistake",
+      "subjectId": "hr"
+    },
+    "timestamp": 1780922943599,
+    "serverTime": "2026-06-08T12:50:24.475Z"
+  },
+  {
+    "event": "mode_started",
+    "data": {
+      "mode": "mistake",
+      "subjectId": "hr"
+    },
+    "timestamp": 1780922995272,
+    "serverTime": "2026-06-08T12:50:24.475Z"
+  },
+  {
+    "event": "session_start",
+    "data": {
+      "timestamp": 1780923022914,
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+      "dbAvailable": true
+    },
+    "timestamp": 1780923022914,
+    "serverTime": "2026-06-08T12:50:24.475Z"
+  },
+  {
+    "event": "mode_started",
+    "data": {
+      "mode": "beginner",
+      "subjectId": "construct1"
+    },
+    "timestamp": 1780923024469,
+    "serverTime": "2026-06-08T12:50:24.475Z"
+  }
+]

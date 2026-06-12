@@ -1,0 +1,15 @@
+智策分析运行日志 — 2026-06-12T06:19:50.342Z
+通过: 4 | 失败: 0
+
+[✅] 用户行为分析
+✅ 报告已生成: D:\project\kaoshi\docs\analysis\user_insight_2026-06-12.md
+   事件总数: 22 | 答题数: 11 | 建议数: 3
+[✅] 营销数据分析
+✅ 营销报告已生成: D:\project\kaoshi\docs\marketing\marketing_insight_2026-06-12.md
+   主力渠道: 考证QQ/微信群, 小红书, 知乎, 微信搜一搜+公众号
+   活跃高峰: 20:00, 8:00
+[✅] 转化率优化分析
+✅ 转化优化报告: D:\project\kaoshi\docs\analysis\conversion_optimization_2026-06-12.md
+   漏斗: 66.7% → 25.0% | 建议: 4条
+[✅] A/B测试验证
+ℹ️  暂无A/B测试数据，已生成接入指南: D:\project\kaoshi\docs\analysis\ab_test_guide_2026-06-12.md
