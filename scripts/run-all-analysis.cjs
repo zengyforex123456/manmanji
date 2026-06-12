@@ -13,9 +13,10 @@ const fs = require('fs');
 
 const SCRIPTS_DIR = __dirname;
 const scripts = [
-  { name: '用户行为分析', file: 'analyze-users.js' },
-  { name: '营销数据分析', file: 'analyze-marketing.js' },
-  { name: 'A/B测试验证',   file: 'ab-test-validator.js' },
+  { name: '用户行为分析',   file: 'analyze-users.cjs' },
+  { name: '营销数据分析',   file: 'analyze-marketing.cjs' },
+  { name: '转化率优化分析', file: 'optimize-conversion.cjs' },
+  { name: 'A/B测试验证',   file: 'ab-test-validator.cjs' },
 ];
 
 const now = new Date();

@@ -17,7 +17,8 @@
     "analyze": "node scripts/run-all-analysis.cjs",
     "analyze:users": "node scripts/analyze-users.cjs",
     "analyze:marketing": "node scripts/analyze-marketing.cjs",
-    "analyze:ab": "node scripts/ab-test-validator.cjs"
+    "analyze:ab": "node scripts/ab-test-validator.cjs",
+    "analyze:conversion": "node scripts/optimize-conversion.cjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.44.0",

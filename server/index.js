@@ -580,6 +580,13 @@ function getSubjectsSummary() {
   }
 }
 
+// ─── 管理后台 + 健康检查 ───
+import { adminRouter } from './admin.mjs';
+app.use('/admin', adminRouter);
+
+import { healthRouter } from './health.mjs';
+app.use('/health', healthRouter);
+
 // ─── 启动 ───
 app.listen(PORT, () => {
   console.log(`\n📚 职考通题库API 已启动`);
