@@ -1,0 +1,14 @@
+# 慢慢记(ManManJi) — 服务器 Crontab 配置
+# 部署后执行: crontab deploy/crontab.txt
+
+# 每天早上6点 — 全量分析（用户行为+营销+A/B）
+0 6 * * * cd /opt/kaoshi && node scripts/run-all-analysis.cjs >> /var/log/zhice-analysis.log 2>&1
+
+# 每周一早上8点 — 额外跑一次（为周一早会准备数据）
+0 8 * * 1 cd /opt/kaoshi && node scripts/run-all-analysis.cjs >> /var/log/zhice-analysis.log 2>&1
+
+# 每天中午12点 — 轻量检查（仅用户分析）
+0 12 * * * cd /opt/kaoshi && node scripts/analyze-users.cjs >> /var/log/zhice-analysis.log 2>&1
+
+# 每30分钟 — 健康检查心跳
+*/30 * * * * curl -s http://localhost:3001/health > /dev/null 2>&1 || echo "$(date): HEALTH FAIL" >> /var/log/kaoshi-alert.log
