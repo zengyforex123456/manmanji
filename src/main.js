@@ -196,6 +196,10 @@ function renderDashboardShell() {
         </div>
       </div>
       <div class="flow-guide" style="margin-top:12px">
+        <div class="flow-title">🧠 AI学习诊断</div>
+        <div id="ai-insights-content" style="padding:8px 0;font-size:13px;color:#64748b;">完成一组刷题后查看AI分析</div>
+      </div>
+      <div class="flow-guide" style="margin-top:12px">
         <div class="flow-title">🏆 成就勋章</div>
         <div id="badge-wall" style="padding:8px 0;"></div>
       </div>
