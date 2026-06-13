@@ -236,7 +236,7 @@ function trackEvent(event, data) {
   }
 }
 
-const METRICS_API = 'http://localhost:3010/api/metrics';
+const METRICS_API = '/api/metrics';
 function flushAnalytics() {
   if (!_state.analyticsEvents || _state.analyticsEvents.length === 0) return;
   const events = _state.analyticsEvents.splice(0);

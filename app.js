@@ -1,4 +1,4 @@
-// app.js - 「慢慢记」全渠道备考管理与学习系统核心引擎
+﻿// app.js - 「慢慢记」全渠道备考管理与学习系统核心引擎
 import { COURSE_DATA, DEFAULT_USER_STATE } from './data.js';
 
 // ----------------------------------
@@ -989,7 +989,7 @@ function renderMobileQuizView() {
           <span style="font-size:2rem;">🎉</span>
           <div style="font-weight:800; font-size:13.5px;">真题速刷已全部过关！</div>
           <p style="font-size:10.5px; color:var(--app-text-muted); line-height:1.4;">做错的题目已经放入【错题巩固本】。大龄考生请勿死记硬背，反复温习口诀即可。</p>
-          <button class="btn-primary" style="padding:6px 16px; font-size:11px;" onclick="resetQuizProgress()">重新挑战</button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;"><button class="btn-primary" style="padding:8px 14px; font-size:12px; font-weight:700;" onclick="resetQuizProgress()">🔄 重新挑战</button><button class="btn-primary" style="padding:8px 14px; font-size:12px; font-weight:700; background:#d97706;" onclick="switchToOtherSubject()">🔥 再来一组，换个科目</button></div>
         </div>
       `;
       return;
@@ -1143,6 +1143,14 @@ function submitMobileAnswer(questionId, selectedKey, element) {
 // 下一题
 function advanceToNextQuiz() {
   currentSubjState().quizDoneCount += 1;
+  const done = currentSubjState().quizDoneCount;
+  const total = (COURSE_DATA.quizzes[userState.activeSubjectId] || []).length;
+  // 每5题里程碑鼓励
+  if (done % 5 === 0 && done < total) {
+    const msgs = ['继续加油，已完成' + done + '题！🔥', '太棒了！' + done + '题达成！💪', '坚持就是胜利！' + done + '题已过！🎯'];
+    showMobileToast(msgs[done % 3]);
+    trackEvent('milestone', { type: 'every_5', count: done, subject: userState.activeSubjectId });
+  }
   saveState();
   renderAll();
 }
@@ -1161,6 +1169,17 @@ function resetQuizProgress() {
   currentSubjState().quizDoneCount = 0;
   saveState();
   renderAll();
+}
+
+function switchToOtherSubject() {
+  const subs = Object.values(COURSE_DATA.subjects);
+  const other = subs.find(s => s.id !== userState.activeSubjectId);
+  if (other) {
+    userState.activeSubjectId = other.id;
+    saveState();
+    renderAll();
+    trackEvent('cross_subject', { from: currentSubjState().subjectId, to: other.id });
+  }
 }
 
 
