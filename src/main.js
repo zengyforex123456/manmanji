@@ -89,6 +89,14 @@ async function bootstrap() {
   });
 
   console.log('[App] 启动完成');
+
+  // 确保AI面板始终更新（兜底：页面加载完成后2秒强制执行）
+  setTimeout(() => {
+    if (!window.__dashboard_data) {
+      window.__dashboard_data = { total: 0, mastery: 0, wrong: 0, streak: 1, dueToday: 0 };
+    }
+    window.loadAIAnalysis();
+  }, 2000);
 }
 
 // ─── 离线检测 ───
