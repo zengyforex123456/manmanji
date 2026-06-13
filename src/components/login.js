@@ -123,14 +123,36 @@ function renderProfile() {
         <div style="font-size:12px;opacity:.8">${u.phone||u.email||u.username}</div>
       </div>
       <div class="login-box" style="margin-bottom:12px"><div class="auth-menu-item" style="color:#dc2626;font-weight:700" onclick="LoginPage.logout()">🚪 退出登录</div></div>
-      <div style="text-align:center"><button class="text-btn" onclick="LoginPage.exportData()">📥 导出数据</button></div>`
+      <div style="text-align:center;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <button class="text-btn" onclick="LoginPage.exportData()">📥 导出数据</button>
+        <button class="text-btn" onclick="LoginPage.importData()">📤 导入数据</button>
+      </div>
+      <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="LoginPage.handleImport(event)">`
       : `<div style="text-align:center;padding:40px"><div style="font-size:48px">👤</div><div style="font-size:16px;font-weight:700;margin:12px 0">未登录</div><button class="cta-primary" onclick="LoginPage.render(()=>goHome())">登录</button></div>`}
     </main>`;
 }
 
 async function exportData() {
-  try { const {DB}=await import('../core/db.js'); const p=[]; for(const s of['econ','hr','biz']) p.push(...await DB.getProgress(s)); const b=new Blob([JSON.stringify({user:getUser(),progress:p,date:new Date().toISOString()})]); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='data.json'; a.click(); } catch(e) { alert('失败'); }
+  try { const {DB}=await import('../core/db.js'); const p=[]; for(const s of['econ','hr','biz']) p.push(...await DB.getProgress(s)); const b=new Blob([JSON.stringify({user:getUser(),progress:p,date:new Date().toISOString()})]); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='data.json'; a.click(); } catch(e) { alert('导出失败'); }
 }
 
-export const LoginPage = { render, logout, getCurrentUser:getUser, renderProfile, exportData };
+function importData() { document.getElementById('import-file-input')?.click(); }
+
+async function handleImport(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!data.progress || !Array.isArray(data.progress)) throw new Error('Invalid format');
+    const { DB } = await import('../core/db.js');
+    for (const p of data.progress) {
+      await DB.saveProgress(p);
+    }
+    alert(`✅ 导入成功！${data.progress.length}条学习记录已恢复。\n导出日期: ${data.date || '未知'}`);
+    window.goHome();
+  } catch(e) { alert('导入失败: ' + (e.message || '文件格式错误')); }
+}
+
+export const LoginPage = { render, logout, getCurrentUser:getUser, renderProfile, exportData, importData, handleImport };
 window.LoginPage = LoginPage;

@@ -69,6 +69,18 @@ async function bootstrap() {
   const { checkTeamJoin } = await import('./components/team-mode.js');
   checkTeamJoin();
 
+  // 5.6 复习提醒
+  try {
+    const stats = await Ebbinghaus.getDailyStats();
+    if (stats.dueToday > 0 && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+    // 更新页面标题显示待复习数
+    if (stats.dueToday > 0) {
+      document.title = `(${stats.dueToday}) 职考通 · 慢慢记`;
+    }
+  } catch(e) {}
+
   // 6. 埋点：会话开始
   State.trackEvent('session_start', {
     timestamp: Date.now(),
