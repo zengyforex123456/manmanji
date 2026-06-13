@@ -301,6 +301,8 @@ async function populateDashboardData() {
     try { const { renderRadarChart } = await import('./components/radar-chart.js'); await renderRadarChart(); } catch(e) {}
     // 勋章检查
     try { const { checkBadges, renderBadgeWall } = await import('./components/badges.js'); await checkBadges(); setTimeout(() => renderBadgeWall('badge-wall'), 500); } catch(e) {}
+    // AI诊断
+    setTimeout(() => window.loadAIAnalysis?.(), 1000);
   } catch(e) { console.warn('[Dashboard] data fill failed:', e); }
 }
 
