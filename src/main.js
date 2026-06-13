@@ -613,7 +613,9 @@ window.startTargetedPractice = async function() {
 window.loadAIAnalysis = async function() {
   const el = document.getElementById('ai-insights-content');
   if (!el) return;
+  el.innerHTML = '🔍 AI分析中...';
   try {
+    const { Analytics } = await import('./services/analytics.js');
     const plan = await Analytics.getAdaptivePlan();
     if (plan.recommendations.length === 0) {
       el.innerHTML = '✅ 暂无特别建议，继续保持学习节奏！';
@@ -649,7 +651,9 @@ window.goHome = function() {
   if (!app) return;
   app.innerHTML = '';
   renderDashboardShell();
-  populateDashboardData();
+  populateDashboardData().then(() => {
+    setTimeout(() => { window.loadAIAnalysis?.(); }, 500);
+  });
   setTimeout(() => { injectAIPanels(); renderLearningCenter(); }, 50);
 };
 
