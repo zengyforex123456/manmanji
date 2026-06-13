@@ -587,6 +587,20 @@ app.use('/admin', adminRouter);
 import { healthRouter } from './health.mjs';
 app.use('/health', healthRouter);
 
+// ─── KAG 知识库 API ───
+import { syncFilesToDB, queryKAG, kagSummary } from './kag-sync.js';
+app.get('/api/kag/sync', async (req, res) => {
+  try { const r = await syncFilesToDB(); res.json(r); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/kag/query', async (req, res) => {
+  try { const r = await queryKAG(req.query); res.json(r); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/kag/summary', async (req, res) => {
+  try { const r = await kagSummary(); res.json(r); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+// 启动时自动同步
+syncFilesToDB().then(r => console.log(`[KAG] 同步完成: ${r.synced}/${r.total} 实体入库`)).catch(e => console.warn('[KAG] 同步失败:', e.message));
+
 // ─── 启动 ───
 app.listen(PORT, () => {
   console.log(`\n📚 职考通题库API 已启动`);
