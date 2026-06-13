@@ -25,18 +25,18 @@ async function getDueReviews(subjectId = null) {
 }
 
 // ─── 记录答题（SM-2核心） ───
-async function recordReview(questionId, quality, subjectId = null) {
+async function recordReview(questionId, quality, subjectId = null, meta = {}) {
   // R43: Promise队列防并发
   if (_writeQueue.has(questionId)) {
     await _writeQueue.get(questionId);
   }
-  const promise = _recordReviewImpl(questionId, quality, subjectId);
+  const promise = _recordReviewImpl(questionId, quality, subjectId, meta);
   _writeQueue.set(questionId, promise);
   promise.finally(() => _writeQueue.delete(questionId));
   return promise;
 }
 
-async function _recordReviewImpl(questionId, quality, subjectId) {
+async function _recordReviewImpl(questionId, quality, subjectId, meta = {}) {
   const sid = subjectId || State.getActiveSubjectId();
   let record;
 
@@ -87,14 +87,16 @@ async function _recordReviewImpl(questionId, quality, subjectId) {
   record.subjectId = sid;
 
   // 补充题目元数据（chapter等，供AI诊断使用）
-  try {
-    const q = await DB.getQuestionById(questionId);
-    if (q) {
-      record.chapter = q.chapter || 0;
-      record._stem = q.stem || '';
-      record._type = q.type || 'single';
-    }
-  } catch(e) { /* 降级：无题目元数据不影响答题 */ }
+  if (meta.chapter !== undefined) {
+    record.chapter = meta.chapter;
+  } else {
+    try {
+      const q = await DB.getQuestionById(questionId);
+      if (q) { record.chapter = q.chapter || 0; record._stem = q.stem || ''; record._type = q.type || 'single'; }
+    } catch(e) { /* 降级 */ }
+  }
+  if (meta.stem) record._stem = meta.stem;
+  if (meta.type) record._type = meta.type;
 
   try {
     await DB.putProgress(record);

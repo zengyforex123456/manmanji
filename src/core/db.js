@@ -53,6 +53,16 @@ async function putQuestions(subjectId, questions) {
   }
 }
 
+async function getQuestionById(questionId) {
+  if (!isAvailable()) return null;
+  try {
+    return await db.questions.where('id').equals(questionId).first();
+  } catch (err) {
+    console.error('[DB] getQuestionById failed:', err);
+    return null;
+  }
+}
+
 async function getQuestionsBySubject(subjectId) {
   if (!isAvailable()) return fallbackGetQuestions(subjectId);
   try {
@@ -207,6 +217,7 @@ export const DB = {
   putQuestions,
   getQuestionsBySubject,
   getQuestionsByChapter,
+  getQuestionById,
   putProgress,
   getProgress,
   getProgressByQuestion,

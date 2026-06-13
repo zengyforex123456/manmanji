@@ -139,8 +139,8 @@ async function handleOptionClick(q, selectedLetter) {
   if (isCorrect) _correctCount++;
 
   const quality = isCorrect ? 4 : 2;
-  // R21: 答即存
-  try { await Ebbinghaus.recordReview(q.id, quality); } catch (e) { /* 降级 */ }
+  // R21: 答即存（带题目元数据供AI诊断）
+  try { await Ebbinghaus.recordReview(q.id, quality, null, { chapter: q.chapter || 0, stem: q.stem, type: q.type }); } catch (e) { /* 降级 */ }
 
   // R18: 埋点
   State.trackEvent('question_answered', {

@@ -333,7 +333,7 @@ async function finalSubmit() {
   for (const q of _questions) {
     const userAns = _answers[q.id] || '';
     const isCorrect = q.type === 'multiple' ? userAns === q.answer : userAns === q.answer;
-    try { await Ebbinghaus.recordReview(q.id, isCorrect ? 4 : 2); } catch (e) {}
+    try { await Ebbinghaus.recordReview(q.id, isCorrect ? 4 : 2, null, { chapter: q.chapter || 0, stem: q.stem, type: q.type }); } catch (e) {}
   }
   State.saveNow();
 
