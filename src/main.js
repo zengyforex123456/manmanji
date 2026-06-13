@@ -188,8 +188,8 @@ function renderDashboardShell() {
         </div>
       </div>
       <div style="text-align:center;margin-top:20px;display:flex;justify-content:center;gap:16px;flex-wrap:wrap">
+        <button class="text-btn" onclick="showSharePoster()">📸 打卡分享</button>
         <button class="text-btn" onclick="showFeedback()">💬 问题反馈</button>
-        <a href="https://wj.qq.com/" target="_blank" class="text-btn" style="text-decoration:none">📋 建议问卷</a>
       </div>
     </main>
 
@@ -441,6 +441,96 @@ window.showFeedback = function() {
       </div>
     </main>
   `;
+};
+
+window.showSharePoster = async function() {
+  const state = State.state;
+  const stats = await Ebbinghaus.getDailyStats();
+  const progress = await DB.getProgress(State.getActiveSubjectId());
+  let wrong = 0; progress.forEach(p => { if (p.wrongCount > 0) wrong++; });
+  const total = stats.totalInQueue || progress.length;
+  const mastery = total >= 50 ? Math.round((total - wrong) / total * 100) : (total > 0 ? Math.round((1 - wrong/total)*100) : 0);
+  const streak = state.daysStudied || 1;
+
+  // Canvas 海报
+  const canvas = document.createElement('canvas');
+  canvas.width = 540; canvas.height = 960;
+  const ctx = canvas.getContext('2d');
+
+  // 背景渐变
+  const bg = ctx.createLinearGradient(0, 0, 0, 960);
+  bg.addColorStop(0, '#0f172a'); bg.addColorStop(1, '#1e3a5f');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, 540, 960);
+
+  // 顶部装饰圆
+  ctx.fillStyle = 'rgba(56,189,248,0.1)'; ctx.beginPath(); ctx.arc(480, 80, 150, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(16,185,129,0.08)'; ctx.beginPath(); ctx.arc(60, 900, 120, 0, Math.PI*2); ctx.fill();
+
+  // 标题
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 32px Inter, system-ui, sans-serif';
+  ctx.textAlign = 'center'; ctx.fillText('📚 我的学习打卡', 270, 100);
+
+  // 日期
+  ctx.fillStyle = '#94a3b8'; ctx.font = '16px Inter, system-ui, sans-serif';
+  ctx.fillText(new Date().toLocaleDateString('zh-CN', {year:'numeric',month:'long',day:'numeric'}), 270, 140);
+
+  // 统计卡片
+  const cards = [
+    { label: '📋 已刷题数', value: total + '题', x: 80, y: 220 },
+    { label: '📊 掌握度', value: mastery + '%', x: 270, y: 220 },
+    { label: '🔥 连续打卡', value: streak + '天', x: 460, y: 220 },
+    { label: '📖 错题攻克', value: wrong + '题', x: 80, y: 340 },
+    { label: '⏰ 今日待复习', value: (stats.dueToday || 0) + '题', x: 270, y: 340 },
+    { label: '🎯 考试科目', value: (getSubjectMeta(State.getActiveSubjectId())?.name || '中级经济师').substring(0,6), x: 460, y: 340 },
+  ];
+
+  cards.forEach(({label, value, x, y}) => {
+    ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.beginPath();
+    ctx.roundRect(x-65, y-30, 130, 70, 12); ctx.fill();
+    ctx.fillStyle = '#94a3b8'; ctx.font = '12px Inter, system-ui, sans-serif';
+    ctx.fillText(label, x, y-5);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 28px Inter, system-ui, sans-serif';
+    ctx.fillText(value, x, y+30);
+  });
+
+  // 名言
+  ctx.fillStyle = '#38bdf8'; ctx.font = 'italic 18px Inter, system-ui, sans-serif';
+  ctx.fillText('"大龄备考不硬背，职场证书轻松过"', 270, 460);
+
+  // 二维码占位
+  ctx.fillStyle = '#fff'; ctx.fillRect(195, 520, 150, 150);
+  ctx.fillStyle = '#0f172a'; ctx.font = 'bold 13px Inter, system-ui, sans-serif';
+  ctx.fillText('扫码开始刷题', 270, 610);
+
+  // 底部CTA
+  ctx.fillStyle = '#10b981'; ctx.font = 'bold 22px Inter, system-ui, sans-serif';
+  ctx.fillText('职考通 · 慢慢记', 270, 730);
+  ctx.fillStyle = '#64748b'; ctx.font = '14px Inter, system-ui, sans-serif';
+  ctx.fillText('碎片时间 · 零基础也能过', 270, 765);
+  ctx.fillText('扫描二维码开始免费刷题', 270, 795);
+
+  // 弹出层
+  const overlay = document.createElement('div');
+  overlay.id = 'poster-overlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:10001;display:flex;align-items:center;justify-content:center;flex-direction:column;';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML = `
+    <img src="${canvas.toDataURL('image/png')}" style="max-width:90vw;max-height:80vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.5);" />
+    <div style="display:flex;gap:12px;margin-top:16px;">
+      <button class="cta-primary" onclick="downloadPoster()" style="padding:10px 24px;font-size:14px;">💾 保存图片</button>
+      <button class="mode-btn" onclick="document.getElementById('poster-overlay').remove()" style="padding:10px 24px;">关闭</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay._canvas = canvas;
+};
+
+window.downloadPoster = function() {
+  const overlay = document.getElementById('poster-overlay');
+  if (!overlay?._canvas) return;
+  const link = document.createElement('a');
+  link.download = '学习打卡_' + new Date().toISOString().split('T')[0] + '.png';
+  link.href = overlay._canvas.toDataURL('image/png');
+  link.click();
 };
 
 window.submitFeedback = function() {

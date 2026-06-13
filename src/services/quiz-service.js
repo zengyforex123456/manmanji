@@ -40,7 +40,7 @@ function calculateWeight(question, progress) {
 }
 
 // ─── 加载题库（API按需 + IndexedDB缓存 + 后台全量同步） ───
-const API = 'http://localhost:3010';
+const API = '';
 let _fullLoadStarted = {};
 
 async function loadSubject(subjectId) {
@@ -95,12 +95,19 @@ async function pickQuestions({ subjectId, mode, chapter = null, count = 10 }) {
 
   // 按模式筛选
   if (mode === 'beginner') {
-    // R8: accuracy>70%优先或新题
+    // R8: 新手模式 — 优先简单题+有口诀+高accuracy
     pool = questions.filter(q => {
       if (chapter && q.chapter !== chapter) return false;
       const acc = q.accuracy || 0.6;
+      const diff = q.difficulty || 3;
+      const hasMnemonic = q.mnemonic && q.mnemonic.length > 2;
+      // 简单题(≤2)或有口诀的优先保留
+      if (diff <= 2) return true;
+      if (hasMnemonic && acc > 0.4) return true;
       return acc > 0.6 || !progressMap[q.id];
     });
+    // 简单题优先排列
+    pool.sort((a, b) => (a.difficulty || 3) - (b.difficulty || 3));
   } else if (mode === 'advanced') {
     // R9: 2-3章混合
     if (chapter) {
