@@ -151,7 +151,9 @@ async function pickQuestions({ subjectId, mode, chapter = null, count = 10 }) {
   }));
   weighted.sort((a, b) => b.weight - a.weight);
 
-  // 取前count
+  // 取前count（加随机扰动避免每次相同）
+  weighted.forEach(w => w.weight *= (0.85 + Math.random() * 0.3)); // ±15%随机扰动
+  weighted.sort((a, b) => b.weight - a.weight);
   let selected = weighted.slice(0, count).map(w => w.q);
 
   // R7: 交错排列
