@@ -268,8 +268,13 @@ async function populateDashboardData() {
     const mistakeEl = document.getElementById('flow-mistake-count');
     if (mistakeEl) mistakeEl.textContent = wrong > 0 ? `${wrong} 道错题待重做` : '暂无错题，继续加油';
 
-    // 🧠 千人千面：profile驱动全部推荐文案
+    // 🧠 千人千面
     applyProfile(profile);
+
+    // 💾 保存数据供AI面板直接读取
+    window.__dashboard_data = { total, mastery, wrong, streak: state.daysStudied || 1, dueToday: stats.dueToday || 0 };
+    // 🔍 立即触发AI诊断（同步，不依赖异步IndexedDB）
+    window.loadAIAnalysis();
 
     // 更新欢迎行 + 连续打卡
     const state = State.state;
@@ -301,8 +306,6 @@ async function populateDashboardData() {
     try { const { renderRadarChart } = await import('./components/radar-chart.js'); await renderRadarChart(); } catch(e) {}
     // 勋章检查
     try { const { checkBadges, renderBadgeWall } = await import('./components/badges.js'); await checkBadges(); setTimeout(() => renderBadgeWall('badge-wall'), 500); } catch(e) {}
-    // AI诊断
-    setTimeout(() => window.loadAIAnalysis?.(), 1000);
   } catch(e) { console.warn('[Dashboard] data fill failed:', e); }
 }
 
@@ -594,41 +597,73 @@ window.askAI = function() {
   answerEl.innerHTML = `<strong>${result.source ? '📚 ' + result.source : '🤖 AI助手'}</strong><br>${result.answer.replace(/\n/g, '<br>')}`;
 };
 
-window.startTargetedPractice = async function() {
-  const app = document.getElementById('app');
-  if (app) app.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh"><div style="text-align:center"><div style="font-size:48px;margin-bottom:16px">🎯</div><div style="font-size:16px;font-weight:700">AI正在为你挑选针对性题目…</div></div></div>';
-  try {
-    const { Analytics } = await import('./services/analytics.js');
-    const { QuizCard } = await import('./components/quiz-card.js');
-    const result = await Analytics.getTargetedQuestions(State.getActiveSubjectId(), 10);
-    if (result.questions.length === 0) {
-      window.goHome();
-      return;
-    }
-    State.trackEvent('mode_started', { mode: 'targeted', subjectId: State.getActiveSubjectId(), reason: result.reason });
-    QuizCard.render('beginner', result.questions, result.reason);
-  } catch(e) { console.error('[Targeted] failed:', e); window.goHome(); }
-};
-
-window.loadAIAnalysis = async function() {
+window.loadAIAnalysis = function() {
   const el = document.getElementById('ai-insights-content');
   if (!el) return;
-  el.innerHTML = '🔍 AI分析中...';
-  try {
-    const { Analytics } = await import('./services/analytics.js');
-    const plan = await Analytics.getAdaptivePlan();
-    if (plan.recommendations.length === 0) {
-      el.innerHTML = '✅ 暂无特别建议，继续保持学习节奏！';
-      return;
+
+  const data = window.__dashboard_data;
+  if (!data) { el.innerHTML = '⏳ 数据加载中...'; return; }
+
+  const { total, mastery, streak, wrong, dueToday } = data;
+  const items = [];
+
+  // 规则1: 总题量不足
+  if (total < 5) {
+    items.push({ icon: '📝', msg: `已刷${total}题，再刷${5-total}题解锁AI诊断`, color: '#94a3b8' });
+  } else {
+    // 规则2: 正确率低 → 建议看解析
+    if (mastery < 50) {
+      items.push({ icon: '🎯', msg: `正确率${mastery}%，建议每题都看完解析再下一题`, color: '#dc2626' });
     }
-    el.innerHTML = '<button class="cta-primary" style="width:100%;margin-bottom:8px;padding:10px;font-size:14px;" onclick="startTargetedPractice()">🎯 针对性练习（AI为你选题）</button>' + plan.recommendations.map(r =>
-      `<div style="margin-bottom:6px;padding:6px 8px;background:var(--bg-pc);border-radius:6px;border-left:3px solid ${r.priority==='urgent'?'#dc2626':r.priority==='high'?'#f59e0b':'#22c55e'}">
-        <span style="font-weight:700">${r.priority==='urgent'?'🔴':r.priority==='high'?'🟡':'🟢'} ${r.action}</span>
-      </div>`
-    ).join('') + `<div style="margin-top:8px;font-weight:600;color:var(--accent)">${plan.summary}</div>`;
-  } catch(e) {
-    el.innerHTML = '完成一组刷题后查看AI分析';
+    // 规则3: 待复习多 → 优先复习
+    if (dueToday > 0) {
+      items.push({ icon: '🔄', msg: `${dueToday}题等待复习，艾宾浩斯遗忘临界点`, color: '#f59e0b' });
+    }
+    // 规则4: 连续打卡
+    if (streak >= 3) {
+      items.push({ icon: '🔥', msg: `连续学习${streak}天！保持节奏，记忆更牢固`, color: '#10b981' });
+    } else if (streak >= 1) {
+      items.push({ icon: '💪', msg: `已学习${streak}天，连续3天解锁"初露锋芒"勋章`, color: '#0f766e' });
+    }
+    // 规则5: 错题多 → 错题模式
+    if (wrong > 5) {
+      items.push({ icon: '📖', msg: `${wrong}道错题待重做，点击下方"错题重做"集中攻克`, color: '#dc2626' });
+    }
+    // 规则6: 学得好
+    if (mastery >= 70 && total >= 20) {
+      items.push({ icon: '🚀', msg: `掌握度${mastery}%！可以挑战模拟考试了`, color: '#10b981' });
+    }
   }
+
+  // 如果是数据不足状态
+  if (total < 5) {
+    el.innerHTML = `<div style="text-align:center;padding:8px 0;">${items.map(i => `<div style="font-size:12px;color:${i.color};margin:4px 0;">${i.icon} ${i.msg}</div>`).join('')}</div>`;
+    return;
+  }
+
+  // 有足够数据
+  el.innerHTML = `
+    <button class="cta-primary" style="width:100%;margin-bottom:8px;padding:10px;font-size:14px;" onclick="startTargetedPractice()">🎯 针对性练习</button>
+    ${items.map(i => `<div style="margin:4px 0;font-size:12px;color:${i.color};">${i.icon} ${i.msg}</div>`).join('')}
+  `;
+};
+
+window.startTargetedPractice = async function() {
+  // 直接使用已有的弱项章节数据，如果没有就随机选题
+  const app = document.getElementById('app');
+  if (app) app.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh"><div style="text-align:center"><div style="font-size:48px">🎯</div><div style="font-size:16px;font-weight:700">AI正在挑选针对性题目…</div></div></div>';
+  try {
+    const { default: QuizService } = await import('./services/quiz-service.js');
+    const { default: QuizCard } = await import('./components/quiz-card.js');
+    const questions = await QuizService.pickQuestions({
+      subjectId: State.getActiveSubjectId(),
+      mode: 'beginner',
+      count: 10,
+    });
+    if (!questions.length) { window.goHome(); return; }
+    State.trackEvent('mode_started', { mode: 'targeted', subjectId: State.getActiveSubjectId() });
+    QuizCard.render('beginner', questions);
+  } catch(e) { console.error(e); window.goHome(); }
 };
 
 // ─── 启动 ───
@@ -651,9 +686,7 @@ window.goHome = function() {
   if (!app) return;
   app.innerHTML = '';
   renderDashboardShell();
-  populateDashboardData().then(() => {
-    setTimeout(() => { window.loadAIAnalysis?.(); }, 500);
-  });
+  populateDashboardData();
   setTimeout(() => { injectAIPanels(); renderLearningCenter(); }, 50);
 };
 
