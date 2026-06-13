@@ -592,6 +592,22 @@ window.askAI = function() {
   answerEl.innerHTML = `<strong>${result.source ? '📚 ' + result.source : '🤖 AI助手'}</strong><br>${result.answer.replace(/\n/g, '<br>')}`;
 };
 
+window.startTargetedPractice = async function() {
+  const app = document.getElementById('app');
+  if (app) app.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh"><div style="text-align:center"><div style="font-size:48px;margin-bottom:16px">🎯</div><div style="font-size:16px;font-weight:700">AI正在为你挑选针对性题目…</div></div></div>';
+  try {
+    const { Analytics } = await import('./services/analytics.js');
+    const { QuizCard } = await import('./components/quiz-card.js');
+    const result = await Analytics.getTargetedQuestions(State.getActiveSubjectId(), 10);
+    if (result.questions.length === 0) {
+      window.goHome();
+      return;
+    }
+    State.trackEvent('mode_started', { mode: 'targeted', subjectId: State.getActiveSubjectId(), reason: result.reason });
+    QuizCard.render('beginner', result.questions, result.reason);
+  } catch(e) { console.error('[Targeted] failed:', e); window.goHome(); }
+};
+
 window.loadAIAnalysis = async function() {
   const el = document.getElementById('ai-insights-content');
   if (!el) return;
@@ -601,7 +617,7 @@ window.loadAIAnalysis = async function() {
       el.innerHTML = '✅ 暂无特别建议，继续保持学习节奏！';
       return;
     }
-    el.innerHTML = plan.recommendations.map(r =>
+    el.innerHTML = '<button class="cta-primary" style="width:100%;margin-bottom:8px;padding:10px;font-size:14px;" onclick="startTargetedPractice()">🎯 针对性练习（AI为你选题）</button>' + plan.recommendations.map(r =>
       `<div style="margin-bottom:6px;padding:6px 8px;background:var(--bg-pc);border-radius:6px;border-left:3px solid ${r.priority==='urgent'?'#dc2626':r.priority==='high'?'#f59e0b':'#22c55e'}">
         <span style="font-weight:700">${r.priority==='urgent'?'🔴':r.priority==='high'?'🟡':'🟢'} ${r.action}</span>
       </div>`

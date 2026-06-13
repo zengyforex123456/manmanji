@@ -228,6 +228,48 @@ async function getAdaptivePlan(subjectId = null) {
   };
 }
 
+// ─── R35增强: 诊断→推荐→一键刷题 ───
+// 根据AI诊断结果，从题库中挑选针对性题目
+async function getTargetedQuestions(subjectId = null, count = 10) {
+  const sid = subjectId || State.getActiveSubjectId();
+  const plan = await getAdaptivePlan(sid);
+  const { weakChapters } = await identifyWeakAreas(sid);
+  const allQuestions = await DB.getQuestionsBySubject(sid);
+
+  if (!allQuestions.length) return { questions: [], reason: '题库未加载' };
+
+  // 策略: 70%弱项章节 + 20%待复习 + 10%随机
+  const picked = [];
+  const weakChapterIds = new Set(weakChapters.map(c => c.chapter));
+
+  // 1. 弱项章节题 (70%)
+  const weakPool = allQuestions.filter(q => weakChapterIds.has(q.chapter));
+  const shuffledWeak = weakPool.sort(() => Math.random() - 0.5).slice(0, Math.ceil(count * 0.7));
+  picked.push(...shuffledWeak);
+
+  // 2. 待复习题 (20%)
+  const due = await Ebbinghaus.getDueReviews(sid);
+  const duePool = allQuestions.filter(q => due.some(d => d.questionId === q.id) && !picked.find(p => p.id === q.id));
+  picked.push(...duePool.sort(() => Math.random() - 0.5).slice(0, Math.ceil(count * 0.2)));
+
+  // 3. 随机补齐 (10%)
+  const rest = allQuestions.filter(q => !picked.find(p => p.id === q.id));
+  picked.push(...rest.sort(() => Math.random() - 0.5).slice(0, count - picked.length));
+
+  const reasonParts = [];
+  if (weakChapters.length > 0) reasonParts.push(`${weakChapters.length}个薄弱章节`);
+  if (due.length > 0) reasonParts.push(`${due.length}题待复习`);
+  const reason = reasonParts.length > 0 ? `基于AI诊断: ${reasonParts.join('，')}` : '智能推荐';
+
+  return {
+    questions: picked.sort(() => Math.random() - 0.5).slice(0, count),
+    reason,
+    weakChapters: weakChapters.slice(0, 3).map(c => c.name),
+    planSummary: plan.summary,
+  };
+}
+
+
 // ─── R36: 智能答疑（基于知识库的简单问答） ───
 function askQuestion(query, subjectId = null) {
   // MVP版本：基于关键词匹配给出学习建议
@@ -259,5 +301,6 @@ export const Analytics = {
   diagnoseErrors,
   identifyWeakAreas,
   getAdaptivePlan,
+  getTargetedQuestions,
   askQuestion,
 };
