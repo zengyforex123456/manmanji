@@ -35,5 +35,24 @@
     </div>
   </div>
   <script type="module" src="/src/main.js"></script>
+  <script>
+    // AI面板兜底更新（页面加载后3秒强制更新,绕过模块异步链）
+    setTimeout(() => {
+      const el = document.getElementById('ai-insights-content');
+      if (el && el.textContent.includes('完成一组刷题')) {
+        // 尝试从localStorage读取学习数据
+        try {
+          const state = JSON.parse(localStorage.getItem('manmanji_user_state') || '{}');
+          const total = (state.learnedPointsCount || 0) + (state.quizDoneCount || 0);
+          const streak = state.daysStudied || 1;
+          if (total > 0) {
+            el.innerHTML = `<div style="margin:4px 0;font-size:12px;color:#10b981;">📝 已学习${total}题 · 🔥连续${streak}天</div><div style="margin:4px 0;font-size:12px;color:#64748b;">继续刷题解锁AI深度诊断</div>`;
+          } else {
+            el.innerHTML = '<div style="font-size:12px;color:#64748b;">📝 完成一组刷题后解锁AI诊断 · <a href="#" onclick="document.querySelector(\'.flow-step\')?.click()" style="color:#6366f1;">开始刷题 →</a></div>';
+          }
+        } catch(e) { el.innerHTML = '<div style="font-size:12px;color:#64748b;">📝 完成一组刷题后解锁AI诊断</div>'; }
+      }
+    }, 3000);
+  </script>
 </body>
 </html>
