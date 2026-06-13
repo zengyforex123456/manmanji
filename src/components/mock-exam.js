@@ -7,6 +7,8 @@ import { Timer } from './timer.js';
 let _questions = [];
 let _answers = {};       // { questionId: selectedKey }
 let _marks = {};         // { questionId: true }
+let _timePerQ = {};      // { questionId: seconds }
+let _qEnterTime = 0;     // 进入当前题的时间戳
 let _currentIdx = 0;
 let _totalTime = 0;
 let _autoSaveTimer = null;
@@ -16,6 +18,8 @@ export async function renderMockExam(mode, questions) {
   _questions = questions;
   _answers = {};
   _marks = {};
+  _timePerQ = {};
+  _qEnterTime = Date.now();
   _currentIdx = 0;
   _totalTime = questions.length > 50 ? 90 * 60 : 90 * 60;
 
@@ -112,7 +116,7 @@ function renderFrame() {
     </div>
   `;
 
-  window.MockExam = { jumpTo, selectAnswer, nextQ, prevQ, toggleMark, submitExam };
+  window.MockExam = { jumpTo, selectAnswer, nextQ, prevQ, toggleMark, submitExam, _doSubmit };
   document.addEventListener('fullscreenchange', onFullscreenChange);
 }
 
@@ -150,7 +154,17 @@ function selectAnswer(letter) {
   refreshCurrentQuestion();
 }
 
+function recordCurrentTime() {
+  if (_qEnterTime > 0 && _questions[_currentIdx]) {
+    const spent = Math.round((Date.now() - _qEnterTime) / 1000);
+    const qid = _questions[_currentIdx].id;
+    _timePerQ[qid] = (_timePerQ[qid] || 0) + spent;
+  }
+  _qEnterTime = Date.now();
+}
+
 function jumpTo(idx) {
+  recordCurrentTime();
   _currentIdx = Math.max(0, Math.min(_questions.length - 1, idx));
   refreshCurrentQuestion();
 }
@@ -257,24 +271,40 @@ function startAutoSave() {
   }, 30000); // 每30秒自动保存
 }
 
-// ─── 交卷 ───
+// ─── 交卷（增强确认弹窗） ───
 function submitExam() {
   const total = _questions.length;
   const answered = Object.keys(_answers).length;
   const unmarked = total - answered;
+  const marked = Object.keys(_marks).length;
 
-  if (unmarked > 0) {
-    const msg = `还有 ${unmarked} 题未作答，确定交卷吗？`;
-    if (!confirm(msg)) return;
-  } else {
-    if (!confirm('确定提交答卷吗？提交后不可修改。')) return;
-  }
+  // 构建未答题列表
+  const unansweredList = _questions
+    .map((q, i) => (!_answers[q.id] ? i + 1 : null))
+    .filter(Boolean).slice(0, 8);
 
-  // 二次确认
-  if (!confirm('再次确认：提交答卷？')) return;
-
-  finalSubmit();
+  const overlay = document.createElement('div');
+  overlay.id = 'submit-confirm-overlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10000;display:flex;align-items:center;justify-content:center;';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:400px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="font-size:32px;margin-bottom:8px;">${unmarked > 0 ? '⚠️' : '📝'}</div>
+      <div style="font-weight:800;font-size:16px;margin-bottom:12px;">${unmarked > 0 ? `还有 ${unmarked} 题未作答` : '确认交卷'}</div>
+      <div style="font-size:13px;color:#64748b;margin-bottom:8px;">
+        ✅ 已答: ${answered}题 &nbsp; ⬜ 未答: ${unmarked}题 &nbsp; ⭐ 标记: ${marked}题
+      </div>
+      ${unansweredList.length > 0 ? `<div style="font-size:11px;color:#94a3b8;margin-bottom:12px;">未答题号: ${unansweredList.join(', ')}${unmarked > 8 ? '...' : ''}</div>` : ''}
+      <div style="font-size:12px;color:#dc2626;margin-bottom:16px;">交卷后不可修改答案</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="document.getElementById('submit-confirm-overlay').remove()" style="flex:1;padding:10px;background:#e2e8f0;border:none;border-radius:8px;font-size:14px;cursor:pointer;">继续答题</button>
+        <button onclick="document.getElementById('submit-confirm-overlay').remove();MockExam._doSubmit()" style="flex:1;padding:10px;background:#dc2626;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">确认交卷</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
 }
+
+function _doSubmit() { finalSubmit(); }
 
 function autoSubmit() {
   Timer.stop();
@@ -311,36 +341,98 @@ async function finalSubmit() {
   const rate = Math.round(correct / total * 100);
   const elapsed = _totalTime - Timer.getElapsed();
 
+  // 时间分布
+  const timeVals = Object.values(_timePerQ);
+  const avgTime = timeVals.length > 0 ? Math.round(timeVals.reduce((a,b)=>a+b,0) / timeVals.length) : 0;
+  const maxTime = Math.max(...timeVals, 1);
+  const timeBars = _questions.map((q, i) => {
+    const sec = _timePerQ[q.id] || 0;
+    const pct = Math.round(sec / maxTime * 100);
+    const bar = '█'.repeat(Math.round(pct / 5));
+    return { i: i+1, sec, bar, pct };
+  }).sort((a, b) => b.sec - a.sec);
+
   const app = document.getElementById('app');
   app.innerHTML = `
-    <div class="mock-container">
-      <main class="mock-main" style="max-width:600px;margin:40px auto">
-        <div style="text-align:center;font-size:48px;margin-bottom:16px">${rate >= 60 ? '🎉' : '💪'}</div>
+    <div class="mock-container" style="background:#f8fafc;min-height:100vh;">
+      <main style="max-width:700px;margin:0 auto;padding:24px;">
+        <div style="text-align:center;font-size:48px;margin-bottom:4px">${rate >= 60 ? '🎉' : '💪'}</div>
         <h2 style="text-align:center;margin-bottom:24px">模拟考试完成</h2>
-        <div class="mock-result-card">
-          <div class="mock-score">${rate}分</div>
-          <div class="mock-score-detail">${correct} / ${total} 题正确</div>
-          <div class="mock-score-detail">用时 ${Math.floor(elapsed/60)}分${elapsed%60}秒</div>
+        <div class="mock-result-card" style="text-align:center;background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:16px;">
+          <div style="font-size:48px;font-weight:900;color:${rate>=60?'#10b981':'#f59e0b'};">${rate}<span style="font-size:16px;">分</span></div>
+          <div style="color:#64748b;margin:8px 0;">${correct} / ${total} 题正确 · 用时 ${Math.floor(elapsed/60)}分${elapsed%60}秒</div>
+          <div style="display:flex;justify-content:center;gap:24px;margin-top:8px;font-size:13px;">
+            <span>✅ 正确 ${correct}</span><span>❌ 错误 ${total-correct}</span><span>⏱ 均时 ${avgTime}秒/题</span>
+          </div>
         </div>
+
         ${wrongList.length > 0 ? `
-        <div class="recent-section" style="margin-top:20px">
-          <div class="section-title">❌ 错题列表（${wrongList.length}题）</div>
-          ${wrongList.slice(0, 10).map((q, i) => `
-            <div class="wrong-item" style="padding:8px 12px;border-bottom:1px solid var(--border-color);font-size:13px;line-height:1.5">
-              <span style="color:var(--accent);font-weight:700">${i+1}.</span>
-              <span style="color:#dc2626">答${q.userAnswer}</span>
-              ${q.stem.substring(0, 60)}...
+        <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:16px;">
+          <div style="font-weight:800;font-size:14px;margin-bottom:12px;">❌ 错题分析（点击查看解析）</div>
+          ${wrongList.slice(0, 15).map((q, i) => `
+            <div class="wrong-item" style="padding:10px 0;border-bottom:1px solid #f1f5f9;cursor:pointer;" onclick="MockExam._showAnalysis('${q.id}', '${q.userAnswer}', '${q.answer}')">
+              <span style="font-weight:700;color:#dc2626;">${i+1}. [${q.type==='multiple'?'多选':'单选'}]</span>
+              <span style="color:#dc2626;font-size:12px;">你选: ${q.userAnswer} → 正确: ${q.answer}</span>
+              <div style="font-size:13px;margin-top:4px;">${q.stem.substring(0, 80)}...</div>
             </div>
           `).join('')}
-          ${wrongList.length > 10 ? `<div style="text-align:center;padding:8px;color:var(--text-secondary)">...还有 ${wrongList.length - 10} 道错题</div>` : ''}
+          ${wrongList.length > 15 ? `<div style="color:#94a3b8;text-align:center;padding:8px;">...还有 ${wrongList.length - 15} 道错题</div>` : ''}
         </div>` : ''}
-        <div class="mode-grid" style="margin-top:20px">
-          <button class="mode-btn" onclick="window.goHome()">🏠 返回首页</button>
-          <button class="mode-btn" onclick="window.goHome()">🔄 再来一套</button>
+
+        <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:16px;">
+          <div style="font-weight:800;font-size:14px;margin-bottom:12px;">⏱ 时间分布（每题耗时）</div>
+          <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">显示用时最多的前10题</div>
+          ${timeBars.slice(0, 10).map(({i, sec, bar}) => `
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:12px;">
+              <span style="width:32px;text-align:right;color:#64748b;">#${i}</span>
+              <span style="color:#38bdf8;font-family:monospace;font-size:10px;">${bar}</span>
+              <span style="color:#94a3b8;">${sec}秒</span>
+            </div>
+          `).join('')}
+          ${timeBars.length === 0 ? '<div style="color:#94a3b8;">暂无时间数据</div>' : ''}
+        </div>
+
+        <div style="display:flex;gap:12px;justify-content:center;">
+          <button class="mode-btn" style="flex:1;max-width:200px;" onclick="window.goHome()">🏠 返回首页</button>
+          <button class="cta-primary" style="flex:1;max-width:200px;" onclick="startMode('mock')">🔄 再来一套</button>
         </div>
       </main>
     </div>
   `;
+
+  window.MockExam._showAnalysis = (qid, userAns, correctAns) => {
+    const q = _questions.find(q => q.id === qid);
+    if (!q) return;
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:10001;display:flex;align-items:center;justify-content:center;';
+    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="font-weight:800;font-size:14px;margin-bottom:12px;">📖 题目解析</div>
+        <div style="font-size:13px;margin-bottom:12px;">${q.stem}</div>
+        ${q.options ? q.options.map((o, i) => {
+          const letter = String.fromCharCode(65 + i);
+          const isUser = userAns.includes(letter);
+          const isCorrect = correctAns.includes(letter);
+          let bg = '#fff';
+          if (isUser && !isCorrect) bg = '#fef2f2';
+          if (isCorrect) bg = '#ecfdf5';
+          return `<div style="padding:6px 10px;margin:4px 0;background:${bg};border-radius:6px;font-size:13px;">
+            <span style="font-weight:700;">${letter}.</span> ${o}
+            ${isUser ? '<span style="color:#dc2626;font-size:11px;"> ← 你的选择</span>' : ''}
+            ${isCorrect ? '<span style="color:#10b981;font-size:11px;"> ✅ 正确答案</span>' : ''}
+          </div>`;
+        }).join('') : ''}
+        <div style="margin-top:12px;padding:10px;background:#f0f9ff;border-radius:8px;font-size:12px;color:#0369a1;">
+          <strong>解析:</strong> ${q.analysis || '暂无解析'}
+        </div>
+        ${q.mnemonic ? `<div style="margin-top:8px;padding:8px;background:#ecfdf5;border-radius:8px;font-size:13px;color:#065f46;">
+          <strong>🧠 口诀:</strong> ${q.mnemonic}
+        </div>` : ''}
+        <button onclick="this.parentElement.parentElement.remove()" style="margin-top:12px;width:100%;padding:10px;background:#0f172a;color:#fff;border:none;border-radius:8px;cursor:pointer;">关闭</button>
+      </div>`;
+    document.body.appendChild(overlay);
+  };
 }
 
 // ─── 全屏变化处理 ───
