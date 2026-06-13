@@ -32,20 +32,21 @@ export default class QuizPage extends Component<{}, State> {
     this.loadQuestions(mode, count);
   }
 
-  loadQuestions(_mode: string, _count: number) {
-    // MVP: 从本地存储加载缓存的题目
+  async loadQuestions(_mode: string, _count: number) {
     Taro.showLoading({ title: '加载题目...' });
     try {
-      const cached = Taro.getStorageSync('mmj_cached_questions');
-      if (cached) {
-        const all = JSON.parse(cached);
-        const shuffled = all.sort(() => Math.random() - 0.5).slice(0, _count);
+      const { fetchQuestions } = await import('../../services/api');
+      const questions = await fetchQuestions('econ', _count * 3); // 取3倍用于随机
+      if (questions.length > 0) {
+        const shuffled = questions.sort(() => Math.random() - 0.5).slice(0, _count);
+        // 缓存到本地
+        Taro.setStorageSync('mmj_questions', JSON.stringify(questions));
         this.setState({ questions: shuffled });
       } else {
-        // 演示数据
         this.setState({ questions: this.getDemoQuestions() });
       }
     } catch (e) {
+      console.warn('[Quiz] load failed, using demo:', e);
       this.setState({ questions: this.getDemoQuestions() });
     }
     Taro.hideLoading();

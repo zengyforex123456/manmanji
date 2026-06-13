@@ -65,6 +65,10 @@ async function bootstrap() {
   // 5. 检查崩溃恢复
   checkCrashRecovery();
 
+  // 5.5 检查组队邀请
+  const { checkTeamJoin } = await import('./components/team-mode.js');
+  checkTeamJoin();
+
   // 6. 埋点：会话开始
   State.trackEvent('session_start', {
     timestamp: Date.now(),
@@ -191,7 +195,12 @@ function renderDashboardShell() {
           </div>
         </div>
       </div>
+      <div class="flow-guide" style="margin-top:12px">
+        <div class="flow-title">🏆 成就勋章</div>
+        <div id="badge-wall" style="padding:8px 0;"></div>
+      </div>
       <div style="text-align:center;margin-top:20px;display:flex;justify-content:center;gap:16px;flex-wrap:wrap">
+        <button class="text-btn" onclick="TeamMode.showTeamPanel()">👥 组队刷题</button>
         <button class="text-btn" onclick="showSharePoster()">📸 打卡分享</button>
         <button class="text-btn" onclick="showFeedback()">💬 问题反馈</button>
       </div>
@@ -274,6 +283,8 @@ async function populateDashboardData() {
     }
     // 雷达图
     try { const { renderRadarChart } = await import('./components/radar-chart.js'); await renderRadarChart(); } catch(e) {}
+    // 勋章检查
+    try { const { checkBadges, renderBadgeWall } = await import('./components/badges.js'); await checkBadges(); setTimeout(() => renderBadgeWall('badge-wall'), 500); } catch(e) {}
   } catch(e) { console.warn('[Dashboard] data fill failed:', e); }
 }
 
