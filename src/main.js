@@ -1,4 +1,4 @@
-// src/main.js — 职考通 V1.5 主入口
+﻿// src/main.js — 职考通 V1.5 主入口
 import { State } from './core/state.js';
 import { DB } from './core/db.js';
 import { QuizService } from './services/quiz-service.js';
