@@ -147,6 +147,10 @@ function renderDashboardShell() {
         <div class="stat-card"><div class="stat-label">📊 掌握度</div><div class="stat-value" id="stat-mastery">-</div></div>
         <div class="stat-card"><div class="stat-label">🔥 连续</div><div class="stat-value" id="stat-streak">${state.daysStudied || 1}天</div></div>
       </div>
+      <div class="flow-guide" style="margin-top:12px">
+        <div class="flow-title">🎯 章节掌握度</div>
+        <div id="radar-container" style="padding:12px 0;"></div>
+      </div>
       <div class="flow-guide">
         <div class="flow-title">📖 学习流程</div>
         <div class="flow-steps">
@@ -268,6 +272,8 @@ async function populateDashboardData() {
         cdSpan.textContent = state.userId ? '已登录' : '距考试约 6 个月';
       }
     }
+    // 雷达图
+    try { const { renderRadarChart } = await import('./components/radar-chart.js'); await renderRadarChart(); } catch(e) {}
   } catch(e) { console.warn('[Dashboard] data fill failed:', e); }
 }
 
