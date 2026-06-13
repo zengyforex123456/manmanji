@@ -86,6 +86,16 @@ async function _recordReviewImpl(questionId, quality, subjectId) {
   record.nextReview = Date.now() + record.interval * 86400000;
   record.subjectId = sid;
 
+  // 补充题目元数据（chapter等，供AI诊断使用）
+  try {
+    const q = await DB.getQuestionById(questionId);
+    if (q) {
+      record.chapter = q.chapter || 0;
+      record._stem = q.stem || '';
+      record._type = q.type || 'single';
+    }
+  } catch(e) { /* 降级：无题目元数据不影响答题 */ }
+
   try {
     await DB.putProgress(record);
   } catch (e) {
