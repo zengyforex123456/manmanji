@@ -1,6 +1,6 @@
 // 极简登录模块
 import { State } from '../core/state.js';
-const API = 'http://localhost:3010';
+const API = '';
 
 let _tab = 'phone';
 
