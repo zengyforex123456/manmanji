@@ -62,6 +62,84 @@ function saveState() {
   localStorage.setItem("manmanji_user_state", JSON.stringify(userState));
 }
 
+// ─── 登录/认证 ───
+let authToken = localStorage.getItem('manmanji_token') || '';
+let authUser = null;
+try { if (authToken) authUser = JSON.parse(atob(authToken)); } catch(e) { authToken = ''; }
+
+async function sendSmsCode(phone) {
+  const res = await fetch('/api/auth/send-code', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone })
+  });
+  return res.json();
+}
+
+async function loginWithPhone(phone, code) {
+  const res = await fetch('/api/auth/login-phone', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, code })
+  });
+  const data = await res.json();
+  if (data.success) {
+    authToken = data.token;
+    authUser = data.user;
+    localStorage.setItem('manmanji_token', authToken);
+    closeLoginModal();
+    renderAll();
+    showMobileToast('登录成功，欢迎回来！👋');
+  } else {
+    alert(data.error || '登录失败');
+  }
+}
+
+function logout() {
+  authToken = '';
+  authUser = null;
+  localStorage.removeItem('manmanji_token');
+  renderAll();
+}
+
+function showLoginModal() {
+  let html = `
+    <div id="login-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;" onclick="if(event.target===this)closeLoginModal()">
+      <div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="font-weight:800;font-size:16px;margin-bottom:16px;">📱 手机号登录</div>
+        <input id="login-phone" type="tel" placeholder="请输入手机号" maxlength="11" style="width:100%;padding:12px;border:1px solid #e2e8f0;border-radius:8px;font-size:15px;margin-bottom:10px;text-align:center;" />
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <input id="login-code" type="text" placeholder="验证码" maxlength="6" style="flex:1;padding:12px;border:1px solid #e2e8f0;border-radius:8px;font-size:15px;text-align:center;" />
+          <button id="btn-send-code" onclick="handleSendCode()" style="padding:12px 14px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;">获取验证码</button>
+        </div>
+        <button onclick="handleLogin()" style="width:100%;padding:12px;background:#10b981;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">登录</button>
+        <div style="font-size:11px;color:#94a3b8;margin-top:12px;">首次登录自动注册 · 登录即同意用户协议</div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function closeLoginModal() {
+  const overlay = document.getElementById('login-overlay');
+  if (overlay) overlay.remove();
+}
+
+async function handleSendCode() {
+  const phone = document.getElementById('login-phone').value.trim();
+  if (!/^1\d{10}$/.test(phone)) return alert('请输入正确的手机号');
+  const btn = document.getElementById('btn-send-code');
+  btn.disabled = true;
+  let sec = 60;
+  btn.innerText = sec + 's';
+  const timer = setInterval(() => { sec--; btn.innerText = sec + 's'; if (sec <= 0) { clearInterval(timer); btn.disabled = false; btn.innerText = '重新发送'; } }, 1000);
+  await sendSmsCode(phone);
+}
+
+async function handleLogin() {
+  const phone = document.getElementById('login-phone').value.trim();
+  const code = document.getElementById('login-code').value.trim();
+  if (!phone || !code) return alert('请输入手机号和验证码');
+  await loginWithPhone(phone, code);
+}
+
 // 汇总统计数据
 function syncGlobalStatsCount() {
   let pointsCount = 0;
@@ -1703,13 +1781,72 @@ function closeWechatPopup() {
 window.addEventListener("DOMContentLoaded", () => {
   // 1. 初始化持久化状态
   initUserState();
-  
+
   // 2. 初始化科目联动
   changeGlobalSubject(userState.activeSubjectId);
-  
+
   // 3. 开启艾宾浩斯心跳轮询
   startEbbinghausTicker();
-  
+
   // 4. 重置一次大屏模考
   initMockExam();
+
+  // 5. 注入登录按钮（右上角固定）
+  const loginBtn = document.createElement('div');
+  loginBtn.id = 'global-login-btn';
+  loginBtn.style.cssText = 'position:fixed;top:10px;right:16px;z-index:9000;';
+  loginBtn.innerHTML = authUser
+    ? `<span style="background:#ecfdf5;color:#065f46;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);" onclick="if(confirm('确定退出登录？'))logout()">👤 ${authUser.phone||authUser.nickName||'已登录'}</span>`
+    : `<span style="background:#1d4ed8;color:#fff;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);" onclick="showLoginModal()">📱 登录</span>`;
+  document.body.appendChild(loginBtn);
+
+  // 6. 注入反馈按钮（右下角固定）
+  const fbBtn = document.createElement('div');
+  fbBtn.id = 'global-feedback-btn';
+  fbBtn.style.cssText = 'position:fixed;bottom:20px;right:16px;z-index:9000;';
+  fbBtn.innerHTML = '<button style="background:#0f172a;color:#fff;border:none;padding:10px 16px;border-radius:24px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.2);" onclick="showFeedbackForm()">💬 反馈</button>';
+  document.body.appendChild(fbBtn);
 });
+
+// ─── 用户反馈 ───
+function showFeedbackForm() {
+  let html = `
+    <div id="feedback-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;" onclick="if(event.target===this)closeFeedbackForm()">
+      <div style="background:#fff;border-radius:12px;padding:20px;width:90%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="font-weight:800;font-size:15px;margin-bottom:12px;">💬 问题反馈</div>
+        <select id="fb-type" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;font-size:13px;">
+          <option value="题目错误">题目错误</option>
+          <option value="功能建议">功能建议</option>
+          <option value="使用问题">使用问题</option>
+          <option value="其他">其他</option>
+        </select>
+        <textarea id="fb-text" placeholder="请描述你的问题或建议..." rows="4" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;resize:vertical;margin-bottom:10px;"></textarea>
+        <div style="display:flex;gap:8px;">
+          <button onclick="closeFeedbackForm()" style="flex:1;padding:10px;background:#e2e8f0;border:none;border-radius:8px;font-size:13px;cursor:pointer;">取消</button>
+          <button onclick="submitFeedback()" style="flex:1;padding:10px;background:#10b981;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">提交</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function closeFeedbackForm() {
+  const overlay = document.getElementById('feedback-overlay');
+  if (overlay) overlay.remove();
+}
+
+function submitFeedback() {
+  const type = document.getElementById('fb-type').value;
+  const text = document.getElementById('fb-text').value.trim();
+  if (!text) return alert('请输入反馈内容');
+  const fb = { type, text, user: authUser?.phone || 'anonymous', time: new Date().toISOString() };
+  // 本地存储
+  let fbs = [];
+  try { fbs = JSON.parse(localStorage.getItem('manmanji_feedback') || '[]'); } catch(e) {}
+  fbs.push(fb);
+  localStorage.setItem('manmanji_feedback', JSON.stringify(fbs));
+  // 发送到服务器
+  fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fb) }).catch(() => {});
+  closeFeedbackForm();
+  showMobileToast('感谢反馈！我们会尽快处理 🙏');
+}

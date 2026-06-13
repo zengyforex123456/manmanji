@@ -397,7 +397,7 @@ window.startMode = async function(mode) {
   // 立即显示加载状态
   const app = document.getElementById('app');
   if (app) app.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh"><div style="text-align:center"><div style="font-size:48px;margin-bottom:16px">📚</div><div style="font-size:16px;font-weight:700">题目加载中…</div></div></div>';
-  const countMap = { beginner: 10, advanced: 20, mock: 105, mistake: 999 };
+  const countMap = { beginner: 5, advanced: 20, mock: 105, mistake: 999 };
   const count = countMap[mode] || 10;
   try {
     const questions = await QuizService.pickQuestions({
