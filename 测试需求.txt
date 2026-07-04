@@ -1,0 +1,69 @@
+测试方法
+
+  # 启动后端
+  cd d:\project\kaoshi\server
+  node index.js
+
+  # 浏览器打开
+  http://localhost:3000
+
+  # 测试支付 API
+  curl -X POST http://localhost:3000/api/payment/create-order \
+    -H "Content-Type: application/json" \
+    -d '{"plan":"vip","openid":"test"}'
+
+
+如改进需求
+
+1.产品增长分析师
+从用户心理学分析，如何提高点击率，转化率和留存率。从上瘾性和易用性，使用效果三方面
+针对“大龄职称考试网站”这一特定场景，我们从用户心理学出发，围绕注意力、上瘾性（Hook模型）、易用性（认知负荷理论）、使用效果（自我效能感） 三个维度，制定一套提升点击率（CTR）→ 转化率（CVR）→ 留存率（Retention） 的方案。
+
+2.用户模拟分析产品问题。
+模拟100用户使用，提出改进建议。
+
+
+3.确认产品带来的价值
+
+如何确认大龄职称考试网能够给用户带来真实价值，学习效果怎么样，帮助通过考试的可能性多大，如何评估。
+
+如何晓得备考的效果。
+
+sk-65d8758a9cbd446ea2398adfc9c5334f
+
+$env:ANTHROPIC_BASE_URL="https://api.deepseek.com/anthropic"
+$env:ANTHROPIC_AUTH_TOKEN="sk-65d8758a9cbd446ea2398adfc9c5334f"
+$env:ANTHROPIC_MODEL="deepseek-v4-pro[1m]"
+$env:ANTHROPIC_DEFAULT_OPUS_MODEL="deepseek-v4-pro[1m]"
+$env:ANTHROPIC_DEFAULT_SONNET_MODEL="deepseek-v4-pro[1m]"
+$env:ANTHROPIC_DEFAULT_HAIKU_MODEL="deepseek-v4-flash"
+$env:CLAUDE_CODE_SUBAGENT_MODEL="deepseek-v4-flash"
+$env:CLAUDE_CODE_EFFORT_LEVEL="max"
+
+
+方法二：系统环境变量（全局生效）
+让所有终端（CMD、PowerShell、VS Code 等）都能读取这些变量。
+
+以管理员身份打开 PowerShell，执行：
+
+powershell
+[System.Environment]::SetEnvironmentVariable('ANTHROPIC_BASE_URL', 'https://api.deepseek.com/anthropic', 'User')
+[System.Environment]::SetEnvironmentVariable('ANTHROPIC_AUTH_TOKEN', 'sk-8c02947cecf6486e9a54cd08bcefd0f8', 'User')
+[System.Environment]::SetEnvironmentVariable('ANTHROPIC_MODEL', 'deepseek-v4-pro', 'User')
+[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_OPUS_MODEL', 'deepseek-v4-pro', 'User')
+[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_SONNET_MODEL', 'deepseek-v4-pro', 'User')
+[System.Environment]::SetEnvironmentVariable('ANTHROPIC_DEFAULT_HAIKU_MODEL', 'deepseek-v4-flash', 'User')
+[System.Environment]::SetEnvironmentVariable('CLAUDE_CODE_SUBAGENT_MODEL', 'deepseek-v4-flash', 'User')
+[System.Environment]::SetEnvironmentVariable('CLAUDE_CODE_EFFORT_LEVEL', 'max', 'User')
+
+
+重启终端后，执行以下任一命令：
+
+PowerShell：$env:ANTHROPIC_AUTH_TOKEN
+
+CMD：echo %ANTHROPIC_AUTH_TOKEN%
+
+如果输出您设置的 API Key，说明配置已永久生效。
+
+
+

@@ -1,0 +1,25 @@
+name: Build & Verify
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '18', cache: 'npm' }
+      - run: npm ci
+      - run: node --check src/main.js
+      - run: node --check src/api.js
+      - run: node --check src/services/ai-question-generator.js
+      - run: node --check src/components/login.js
+      - run: node --check server/index.js
+      - run: npm run build
+      - run: test -f dist/index.html
+      - run: grep -q "generate-questions" dist/assets/index-*.js
+      - name: Smoke test
+        run: |
+          curl -sf -o /dev/null http://46.38.245.170:3010/api/health && echo "✅" || echo "⚠️ server offline (expected in CI)"

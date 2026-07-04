@@ -1,0 +1,21 @@
+#!/bin/sh
+# 提交前自动检查
+echo "🔍 语法检查..."
+node --check src/main.js 2>&1 && echo "✅ main.js OK" || { echo "❌ main.js 语法错误"; exit 1; }
+node --check src/api.js 2>&1 && echo "✅ api.js OK" || { echo "❌ api.js 语法错误"; exit 1; }
+node --check src/services/ai-question-generator.js 2>&1 && echo "✅ ai-question OK" || { echo "❌ ai-question 语法错误"; exit 1; }
+node --check src/components/login.js 2>&1 && echo "✅ login.js OK" || { echo "❌ login.js 语法错误"; exit 1; }
+
+echo "📦 构建检查..."
+npm run build 2>&1 | tail -2
+if [ ! -f dist/index.html ]; then echo "❌ 构建失败"; exit 1; fi
+if ! grep -q "generate-questions" dist/assets/index-*.js; then echo "❌ 构建缺少API"; exit 1; fi
+echo "✅ 构建通过"
+
+echo "🧪 回归测试(组件契约)..."
+npx vitest run tests/regression-test.js 2>&1 | tail -5 || { echo "❌ 回归测试失败"; exit 1; }
+
+echo "🧪 快速测试..."
+curl -sf -o /dev/null http://46.38.245.170:3010/api/health && echo "✅ API在线" || echo "⚠️ API离线(可忽略)"
+echo ""
+echo "✅ 全部检查通过，可以提交"

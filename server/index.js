@@ -1,4 +1,4 @@
-// server/index.js — 职考通题库管理API
+// server/index.js — 极简智考题库管理API
 // 启动: node server/index.js
 // 端口: 3001 (开发) / process.env.PORT (生产)
 import express from 'express';
@@ -580,12 +580,106 @@ function getSubjectsSummary() {
   }
 }
 
+// ─── AI答疑机器人 ───
+import aiTutor from './ai-tutor.js';
+app.use('/api/ai', aiTutor);
+
+// ─── 社群积分 ───
+import community from './community.js';
+app.use('/api/community', community);
+
+// ─── 支付（生产）───
+import paymentsReal from './payments-real.js';
+app.use('/api/payments', paymentsReal);
+
+// ─── 账号体系 (JWT·注册·登录·VIP) ───
+import { register, login, authenticate, requireAuth, activateVIP, getUser } from './auth.js';
+import { authMiddleware } from './auth.js';
+app.use(authMiddleware);
+
+app.post('/api/auth/register', function(req, res) {
+  try {
+    var result = register(req.body.username, req.body.password);
+    if (result.error) return res.status(400).json({ error: result.error });
+    res.json(result);
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/auth/login', function(req, res) {
+  try {
+    var result = login(req.body.username, req.body.password);
+    if (result.error) return res.status(401).json({ error: result.error });
+    res.json(result);
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/auth/me', requireAuth, function(req, res) {
+  res.json(req.user);
+});
+
+app.post('/api/auth/activate-vip', requireAuth, function(req, res) {
+  try {
+    var result = activateVIP(req.user.userId, req.body.productId);
+    if (result.error) return res.status(400).json({ error: result.error });
+    res.json(result);
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── 管理后台 + 健康检查 ───
 import { adminRouter } from './admin.mjs';
 app.use('/admin', adminRouter);
 
 import { healthRouter } from './health.mjs';
 app.use('/health', healthRouter);
+
+// ─── 错误自动积累到KAG ───
+import { captureError } from './zhice-pipeline.js';
+app.use(function(err, req, res, next) {
+  captureError(err, { route: req.url, method: req.method }).catch(function() {});
+  next(err);
+});
+
+// 前端错误上报 → 持久化
+app.post('/api/kag/sync', async function(req, res) {
+  try {
+    var { type, signature, message, count, url } = req.body;
+    var { getDB } = await import('./db.js');
+    var db = getDB();
+    var { v4: uuid } = await import('uuid');
+    var id = 'err-' + (signature || uuid().slice(0, 8));
+    // upsert
+    var existing = await db.get('SELECT id,content FROM kag_entities WHERE id=?', [id]);
+    if (existing) {
+      var old = JSON.parse(existing.content || '{}');
+      old.count = (old.count || 0) + 1;
+      old.lastSeen = new Date().toISOString();
+      await db.run('UPDATE kag_entities SET content=?, updated_at=datetime(?) WHERE id=?',
+        [JSON.stringify(old), 'now', id]);
+    } else {
+      await db.run(
+        'INSERT INTO kag_entities (id,project_id,type,title,content,tags,maturity,created_by) VALUES (?,?,?,?,?,?,?,?)',
+        [id, 'kaoshi', '前端错误', '[' + (type || 'error') + '] ' + (message || '').slice(0, 60),
+         JSON.stringify({ type, signature, message, count: count || 1, url, firstSeen: new Date().toISOString(), lastSeen: new Date().toISOString() }),
+         JSON.stringify(['前端错误', type || 'error', '自动捕获']), '种子', 'frontend-error-capture'],
+      );
+    }
+    console.log('[KAG] 前端错误入库:', id, message?.slice(0, 40));
+    res.json({ ingested: true, id: id });
+  } catch(e) {
+    console.error('[KAG] 错误入库失败:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ─── 隐私政策 + 用户协议 ───
+app.get('/privacy', function(req, res) {
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.send('<!DOCTYPE html><html lang=zh-CN><head><meta charset=utf-8><title>隐私政策 - 极简智考</title><meta name=viewport content="width=device-width,initial-scale=1"><style>body{font-family:-apple-system,sans-serif;max-width:700px;margin:40px auto;padding:0 20px;line-height:1.8;color:#1a1a2e}h1{color:#1a56db}h2{color:#1e40af;margin-top:24px}</style></head><body><h1>极简智考 隐私政策</h1><p>生效日期：2026年7月4日</p><h2>1. 信息收集</h2><p>我们仅收集您的用户名、密码（加密存储）和学习数据（刷题记录、正确率）。不收集任何个人身份信息。</p><h2>2. 数据存储</h2><p>所有数据存储在境内服务器，使用SQLite加密存储。密码使用PBKDF2+SHA512哈希，不可逆。</p><h2>3. 数据使用</h2><p>您的学习数据仅用于：AI出题、薄弱项分析、个性化学习推荐。不会出售或分享给第三方。</p><h2>4. 信息安全</h2><p>使用JWT token认证，密码加盐哈希。建议使用独立密码，不要与其他平台共用。</p><h2>5. 联系我们</h2><p>如有隐私问题，请联系：jijianzhikao@163.com</p></body></html>');
+});
+app.get('/terms', function(req, res) {
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.send('<!DOCTYPE html><html lang=zh-CN><head><meta charset=utf-8><title>用户协议 - 极简智考</title><meta name=viewport content="width=device-width,initial-scale=1"><style>body{font-family:-apple-system,sans-serif;max-width:700px;margin:40px auto;padding:0 20px;line-height:1.8;color:#1a1a2e}h1{color:#1a56db}</style></head><body><h1>极简智考 用户协议</h1><p>生效日期：2026年7月4日</p><h2>1. 服务说明</h2><p>极简智考是AI驱动的中级经济师备考平台，提供刷题、AI出题、薄弱项分析等服务。</p><h2>2. 用户责任</h2><p>用户需保证账号密码安全。AI生成的题目仅供参考，考试以官方教材为准。</p><h2>3. 付费服务</h2><p>单科卡¥68（有效至考试日），全科通卡¥198。付费后不支持退款（除法律要求外）。</p><h2>4. 免责声明</h2><p>AI出题基于大模型生成，可能存在不准确之处。我们持续优化但不保证100%准确性。</p></body></html>');
+});
 
 // ─── KAG 知识库 API ───
 import { syncFilesToDB, queryKAG, kagSummary } from './kag-sync.js';
@@ -601,10 +695,28 @@ app.get('/api/kag/summary', async (req, res) => {
 // 启动时自动同步
 syncFilesToDB().then(r => console.log(`[KAG] 同步完成: ${r.synced}/${r.total} 实体入库`)).catch(e => console.warn('[KAG] 同步失败:', e.message));
 
+// ─── zhice-os 数据管道 ───
+import { startPipeline, runPipeline, syncToKAG } from './zhice-pipeline.js';
+app.get('/api/pipeline/run', async (req, res) => {
+  try { const r = await runPipeline(); res.json(r); } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/pipeline/report', async (req, res) => {
+  try {
+    const { collectMetrics, generateInsightReport, generateActions } = await import('./zhice-pipeline.js');
+    const metrics = collectMetrics();
+    const report = generateInsightReport(metrics);
+    const actions = generateActions(report);
+    res.json({ report, actions });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── 启动 ───
 app.listen(PORT, () => {
-  console.log(`\n📚 职考通题库API 已启动`);
+  console.log(`\n📚 极简智考题库API 已启动`);
   console.log(`   地址: http://localhost:${PORT}`);
   console.log(`   鉴权: ${AUTH_ENABLED ? '已启用 (x-api-key)' : '已关闭（开发模式，免鉴权）'}`);
+  console.log(`   数据管道: http://localhost:${PORT}/api/pipeline/report`);
   console.log(`   健康检查: http://localhost:${PORT}/api/health\n`);
+  // 启动数据管道（每1小时自动采集→分析→推送→决策）
+  startPipeline(3600000);
 });

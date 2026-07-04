@@ -269,6 +269,58 @@ function renderLandingCategoryGrid() {
 }
 
 // 从Landing页面进入某科目的备考
+function enterSubject(subjectId) {
+
+// ═══ 支付流程 ═══
+let paymentModal = null;
+
+window.showPayment = function(productId, productName, price) {
+  if (paymentModal) paymentModal.remove();
+  var modal = document.createElement('div');
+  modal.className = 'payment-modal';
+  modal.innerHTML = '<div class="payment-overlay" onclick="closePayment()"></div>'
+    + '<div class="payment-card">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
+    + '<h3 style="margin:0;font-size:18px">解锁会员</h3>'
+    + '<button onclick="closePayment()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#888;line-height:1">&times;</button>'
+    + '</div>'
+    + '<p style="color:#666;margin:0 0 16px">' + productName + ' <b style="color:#1a56db">¥' + price + '</b></p>'
+    + '<div id="payment-qrcode" style="text-align:center;padding:20px;background:#f8fafc;border-radius:8px;min-height:200px;display:flex;align-items:center;justify-content:center">'
+    + '<span style="color:#888">⏳ 生成支付二维码...</span>'
+    + '</div>'
+    + '<p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:8px" id="payment-hint">微信/支付宝扫码支付 · 虎皮椒安全支付</p>'
+    + '</div>';
+  document.body.appendChild(modal);
+  paymentModal = modal;
+
+  var isWechat = /MicroMessenger/i.test(navigator.userAgent);
+  if (isWechat) document.getElementById('payment-hint').textContent = '📸 请截图后用微信扫码支付';
+
+  fetch('/api/payments/create', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ productId: productId, userId: localStorage.getItem('manmanji_user_id') || 'guest' }),
+  }).then(function(r) { return r.json(); }).then(function(data) {
+    var qr = document.getElementById('payment-qrcode');
+    if (data.error) { qr.innerHTML = '<span style="color:#dc2626">❌ ' + data.error + '</span>'; return; }
+    // 保存订单ID到本地，支付后自动轮询激活
+    if (data.orderId) localStorage.setItem('mmj_pending_order', data.orderId);
+
+    if (data.qrCode) {
+      qr.innerHTML = '<img src="' + data.qrCode + '" style="max-width:220px;border-radius:4px" alt="支付二维码"><p style="font-size:12px;color:#16a34a;margin-top:8px">¥' + data.amount + ' · 扫码支付后自动开通</p>';
+    } else if (data.payUrl) {
+      qr.innerHTML = '<a href="' + data.payUrl + '" style="display:inline-block;background:#1a56db;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-size:16px">📱 前往支付</a><p style="font-size:12px;color:#16a34a;margin-top:8px">' + data.product + ' · 支付后自动开通</p>';
+      if (!isWechat) setTimeout(function() { window.location.href = data.payUrl; }, 500);
+    }
+  }).catch(function(e) {
+    document.getElementById('payment-qrcode').innerHTML = '<span style="color:#dc2626">网络异常，请稍后重试</span>';
+  });
+};
+
+window.closePayment = function() {
+  if (paymentModal) { paymentModal.remove(); paymentModal = null; }
+};
+
+// 从Landing页面进入某科目的备考
 function enterSubjectFromLanding(subjId) {
   changeGlobalSubject(subjId);
   switchPCView('dashboard');
@@ -304,7 +356,7 @@ function renderMembershipPricing() {
         <ul class="membership-features">
           ${featuresHtml}
         </ul>
-        <button class="membership-cta" style="background:${ctaBg}; color:white;" onclick="alert('${isCurrent ? '您当前已是该套餐用户' : '正式版将接入微信支付，敬请期待！'}')">${ctaText}</button>
+        <button class="membership-cta" style="background:${ctaBg}; color:white;" onclick="${isCurrent ? '' : "showPayment('" + tier.id + "','" + tier.name + "'," + parseInt(tier.price) + ")"}">${ctaText}</button>
       </div>
     `;
   });

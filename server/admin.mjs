@@ -58,7 +58,7 @@ adminRouter.get('/', (req, res) => {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>慢慢记 — 智策分析后台</title>
+<title>极简智考 — 智策分析后台</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: Inter, system-ui, sans-serif; background:#0f172a; color:#e2e8f0; min-height:100vh; }
@@ -90,7 +90,7 @@ adminRouter.get('/', (req, res) => {
 </head>
 <body>
 <div class="container">
-  <h1>📊 慢慢记 · 智策分析后台</h1>
+  <h1>📊 极简智考 · 智策分析后台</h1>
   <p class="subtitle">${new Date().toLocaleString('zh-CN', {timeZone:'Asia/Shanghai'})} · 数据驱动产品增长</p>
 
   <div class="cards">

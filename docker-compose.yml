@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    container_name: jijianzhikao
+    ports:
+      - "3010:80"
+    restart: unless-stopped
+    environment:
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - ZHICE_LLM_API_KEY=${ZHICE_LLM_API_KEY}
+      - XUNHU_APPID=${XUNHU_APPID:-201906159735}
+      - XUNHU_APPSECRET=${XUNHU_APPSECRET}
+    volumes:
+      - ./data:/app/data  # 题库/用户数据持久化

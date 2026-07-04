@@ -1,4 +1,4 @@
-﻿// src/main.js — 职考通 V1.5 主入口
+﻿// src/main.js — 极简智考 V1.5 主入口
 import { State } from './core/state.js';
 import { DB } from './core/db.js';
 import { QuizService } from './services/quiz-service.js';
@@ -8,6 +8,9 @@ import { LoginPage } from './components/login.js';
 import { Analytics } from './services/analytics.js';
 import { Ebbinghaus } from './services/ebbinghaus.js';
 import { renderSubjectNav } from './components/subject-nav.js';
+import { generateQuestions, generateWeakPointQuestions, analyzeWeakPoints } from './services/ai-question-generator.js';
+import { renderWelcomeBar, updateCountdown } from './components/WelcomeBar.js';
+import { renderAIBrain } from './components/AIBrain.js';
 import './style.css';
 
 // LC chapter functions (lightweight)
@@ -44,7 +47,7 @@ window.LC.showChapters = () => {
 
 // ─── 应用初始化 ───
 async function bootstrap() {
-  console.log('[App] 职考通 V1.5 启动中...');
+  console.log('[App] 极简智考 V1.5 启动中...');
 
   // 1. 初始化状态（含崩溃恢复）
   await State.init();
@@ -77,7 +80,7 @@ async function bootstrap() {
     }
     // 更新页面标题显示待复习数
     if (stats.dueToday > 0) {
-      document.title = `(${stats.dueToday}) 职考通 · 慢慢记`;
+      document.title = `(${stats.dueToday}) 极简智考 · 慢慢记`;
     }
   } catch(e) {}
 
@@ -150,7 +153,7 @@ function renderDashboardShell() {
 
     <!-- 顶部导航 -->
     <nav class="top-nav">
-      <div class="nav-brand" onclick="location.reload()">职考通</div>
+      <div class="nav-brand" onclick="location.reload()">极简智考<span style="font-size:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:2px 6px;border-radius:4px;margin-left:6px;font-weight:500;vertical-align:middle">🧠 AI驱动</span></div>
       <div class="nav-subjects" id="nav-subjects"></div>
       <div class="nav-user" id="nav-user">
         ${state.userId
@@ -162,10 +165,7 @@ function renderDashboardShell() {
 
     <!-- 主内容区 -->
     <main class="main-content">
-      <div class="welcome-row">
-        <span class="welcome-text">👋 ${getGreeting()}，${state.userId ? '考友' : '访客'}</span>
-        <span class="exam-countdown">${state.userId ? '已登录' : '距考试约 6 个月'}</span>
-      </div>
+      ${renderWelcomeBar(state)}
       <div class="stats-row">
         <div class="stat-card"><div class="stat-label">📋 待复习</div><div class="stat-value" id="stat-due">-</div></div>
         <div class="stat-card"><div class="stat-label">📊 掌握度</div><div class="stat-value" id="stat-mastery">-</div></div>
@@ -174,6 +174,26 @@ function renderDashboardShell() {
       <div class="flow-guide" style="margin-top:12px">
         <div class="flow-title">🎯 章节掌握度</div>
         <div id="radar-container" style="padding:12px 0;"></div>
+      </div>
+      <div class="flow-guide" style="background:linear-gradient(135deg,#eff6ff,#faf5ff);border:1px solid #c7d2fe;border-radius:12px;padding:14px">
+        <div class="flow-title" style="color:#4f46e5">🧠 AI学习诊断 <span style="font-size:10px;background:#6366f1;color:#fff;padding:2px 6px;border-radius:4px;margin-left:4px">⭐ 推荐</span></div>
+	    <div style="display:flex;gap:6px;margin:4px 0;align-items:center">
+          <button onclick="showPricingModal()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔓 开通VIP</button>
+          <span style="font-size:11px;color:#92400e">¥68/科 · 有效至考试 · 今日免费' + getFreeQuota() + '题</span>
+        </div>
+        <div style="display:flex;gap:8px;margin:8px 0">
+          <input id="ai-prompt-input" type="text" placeholder="输入出题需求：如"宏观经济10道中等难度"" style="flex:1;padding:8px 12px;border:1px solid #c7d2fe;border-radius:8px;font-size:13px;outline:none" onkeydown="if(event.key==='Enter')startAIFromPrompt()">
+          <button onclick="startAIFromPrompt()" style="background:#6366f1;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px;white-space:nowrap">🎯 出题</button>
+          <button onclick="startAIExam()" style="background:#0f766e;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px;white-space:nowrap">📝 AI组卷</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+          <button onclick="startAIQuick('10道单选题')" style="background:#f1f5f9;border:1px solid #e2e8f0;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;color:#64748b">📊 10道单选</button>
+          <button onclick="startAIQuick('5道计算分析题')" style="background:#f1f5f9;border:1px solid #e2e8f0;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;color:#64748b">📈 5道计算</button>
+          <button onclick="startAIExam()" style="background:#f1f5f9;border:1px solid #e2e8f0;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;color:#64748b">📝 组模拟卷</button>
+          <button onclick="startAIWeak()" style="background:#fef3c7;border:1px solid #fcd34d;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;color:#92400e">🎯 薄弱项专项</button>
+          <button onclick="startAIQuick('每日10题综合练习')" style="background:#f1f5f9;border:1px solid #e2e8f0;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;color:#64748b">⏰ 每日10题</button>
+        </div>
+        <div id="ai-insights-content" style="padding:8px 0;font-size:13px;color:#64748b;">完成一组刷题后查看AI分析</div>
       </div>
       <div class="flow-guide">
         <div class="flow-title">📖 学习流程</div>
@@ -188,6 +208,13 @@ function renderDashboardShell() {
         <div class="flow-title">🎮 自由探索</div>
         <div class="flow-section-hint" style="font-size:11px;color:#94a3b8;margin-bottom:10px">选择你自己的学习方式，每种方式都针对不同备考需求</div>
         <div style="display:flex;flex-direction:column;gap:6px">
+          <div class="explore-row" onclick="startAIQuestions()" style="border:1px solid #c7d2fe;background:#faf5ff">
+            <span class="explore-icon">🤖</span>
+            <span class="explore-name">AI智能出题</span>
+            <span style="font-size:9px;background:#8b5cf6;color:#fff;padding:1px 5px;border-radius:3px;margin-left:4px">⭐推荐</span>
+            <span class="explore-desc">AI生成针对性练习</span>
+            <span class="explore-why">适合：薄弱项靶向攻克</span>
+          </div>
           <div class="explore-row" onclick="startMode('advanced')">
             <span class="explore-icon">🎲</span>
             <span class="explore-name">随机挑战</span>
@@ -216,19 +243,24 @@ function renderDashboardShell() {
         </div>
       </div>
       <div class="flow-guide" style="margin-top:12px">
-        <div class="flow-title">🧠 AI学习诊断</div>
-        <div id="ai-insights-content" style="padding:8px 0;font-size:13px;color:#64748b;">完成一组刷题后查看AI分析</div>
-      </div>
-      <div class="flow-guide" style="margin-top:12px">
         <div class="flow-title">🏆 成就勋章</div>
         <div id="badge-wall" style="padding:8px 0;"></div>
       </div>
-      <div style="text-align:center;margin-top:20px;display:flex;justify-content:center;gap:16px;flex-wrap:wrap">
-        <button class="text-btn" onclick="TeamMode.showTeamPanel()">👥 组队刷题</button>
-        <button class="text-btn" onclick="showSharePoster()">📸 打卡分享</button>
-        <button class="text-btn" onclick="showFeedback()">💬 问题反馈</button>
-      </div>
     </main>
+
+    <!-- 底部固定栏 -->
+    <div class="bottom-bar" style="position:fixed;bottom:0;left:0;right:0;height:56px;background:#fff;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-around;z-index:999;box-shadow:0 -2px 8px rgba(0,0,0,.05);padding-bottom:env(safe-area-inset-bottom)">
+      <button onclick="TeamMode.showTeamPanel()" style="background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-size:11px;color:#64748b;padding:4px 12px">
+        <span style="font-size:20px">👥</span>组队刷题
+      </button>
+      <button onclick="showSharePoster()" style="background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-size:11px;color:#64748b;padding:4px 12px">
+        <span style="font-size:20px">📸</span>打卡分享
+      </button>
+      <button onclick="showFeedback()" style="background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-size:11px;color:#64748b;padding:4px 12px">
+        <span style="font-size:20px">💬</span>问题反馈
+      </button>
+    </div>
+    <!-- 底部栏占位 --><div style="height:70px"></div>
 
     <!-- 手机仿真器 -->
     <div class="phone-preview-panel" id="phone-preview" style="display:none;">
@@ -241,6 +273,12 @@ function renderDashboardShell() {
   `;
 
   renderSubjectNav();
+
+  // 注入支付按钮 + UI增强（等dashboard DOM就绪）
+  setTimeout(function() {
+    if (window.__injectPayment) window.__injectPayment();
+    import('./components/enhance-ui.js').then(function(m) { m.enhanceDashboard(); });
+  }, 300);
 
   // 绑定章节学习点击事件（避免onclick在HMR下失效）
   setTimeout(() => {
@@ -301,15 +339,7 @@ async function populateDashboardData() {
       State.saveNow();
     }
     if (streakEl) streakEl.textContent = newStreak + '天';
-    if (cdSpan) {
-      const examDate = localStorage.getItem('mmj_exam_date');
-      if (examDate) {
-        const days = Math.ceil((new Date(examDate) - new Date()) / 86400000);
-        cdSpan.textContent = days > 0 ? `距考试 ${days} 天` : '考试已结束';
-      } else {
-        cdSpan.textContent = state.userId ? '已登录' : '距考试约 6 个月';
-      }
-    }
+    updateCountdown(state);
     // 雷达图
     try { const { renderRadarChart } = await import('./components/radar-chart.js'); await renderRadarChart(); } catch(e) {}
     // 勋章检查
@@ -421,6 +451,81 @@ function applyProfile(p) {
 
 // renderSubjectNav() now in src/components/subject-nav.js
 
+// ── 免费配额 ──
+var FREE_DAILY_LIMIT = 20;
+function getFreeQuota() {
+  var today = new Date().toDateString();
+  var key = 'mmj_daily_' + today;
+  var used = parseInt(localStorage.getItem(key) || '0');
+  return Math.max(0, FREE_DAILY_LIMIT - used);
+}
+function useFreeQuota(n) {
+  var today = new Date().toDateString();
+  var key = 'mmj_daily_' + today;
+  var used = parseInt(localStorage.getItem(key) || '0');
+  localStorage.setItem(key, used + (n || 1));
+  return FREE_DAILY_LIMIT - (used + (n || 1));
+}
+function checkPaywall() {
+  var remaining = getFreeQuota();
+  var state = JSON.parse(localStorage.getItem('manmanji_user_state') || '{}');
+  if (state.membershipTier === 'vip') return true; // VIP无限
+  if (remaining <= 0) {
+    showPricingModal();
+    return false;
+  }
+  return true;
+}
+function showPricingModal() {
+  if (document.getElementById('pricing-modal')) return;
+  var m = document.createElement('div');
+  m.id = 'pricing-modal';
+  m.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;display:flex;align-items:center;justify-content:center';
+  m.innerHTML = '<div onclick=this.parentElement.remove() style=position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5)></div>'
+    + '<div style=position:relative;background:#fff;border-radius:16px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center>'
+    + '<h3 style=margin:0>🔓 开通极简智考VIP</h3><p style=color:#64748b;margin:4px 0 12px>今日免费' + FREE_DAILY_LIMIT + '题已用完·有效至2026年11月考试</p>'
+    + '<div style=display:flex;gap:12px;margin:12px 0>'
+    + '<div style=flex:1;background:#fff;border:2px solid #e2e8f0;border-radius:12px;padding:14px;text-align:center>'
+    + '<div style=font-size:13px;font-weight:700;color:#1a1a2e>单科卡</div>'
+    + '<div style=font-size:24px;font-weight:900;color:#1a56db;margin:8px 0>¥68</div>'
+    + '<div style=font-size:11px;color:#64748b;line-height:1.6;text-align:left>✅ 19,749题<br>✅ AI出题10次/天<br>✅ 薄弱项分析<br>✅ 口诀解锁</div>'
+    + '<button onclick="showPayment(\'single_econ\',\'极简智考·单科卡\',68)" style=display:block;width:100%;padding:8px;margin-top:10px;background:#1a56db;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px>¥68 购买</button>'
+    + '</div>'
+    + '<div style=flex:1;background:#fef3c7;border:2px solid #f59e0b;border-radius:12px;padding:14px;text-align:center;position:relative>'
+    + '<div style=position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#f59e0b;color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700>推荐</div>'
+    + '<div style=font-size:13px;font-weight:700;color:#1a1a2e>全科通卡</div>'
+    + '<div style=font-size:24px;font-weight:900;color:#d97706;margin:8px 0>¥198</div>'
+    + '<div style=font-size:11px;color:#64748b;line-height:1.6;text-align:left>✅ 3科全开<br>✅ AI出题不限次<br>✅ 薄弱项靶向<br>✅ 模拟考试无限次</div>'
+    + '<button onclick="showPayment(\'vip_all\',\'极简智考·全科通卡\',198)" style=display:block;width:100%;padding:8px;margin-top:10px;background:#f59e0b;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700>¥198 购买</button>'
+    + '</div>'
+    + '</div>'
+    + '<button onclick="this.parentElement.parentElement.remove()" style=background:none;border:none;color:#94a3b8;cursor:pointer;font-size:12px;margin-top:8px">继续免费刷题（今日剩余' + getFreeQuota() + '题）</button>'
+    + '</div>';
+  document.body.appendChild(m);
+}
+window.showPricingModal = showPricingModal;
+
+function getExamMonths() {
+  // 中级经济师: 每年11月第一个周末
+  var now = new Date();
+  var year = now.getFullYear();
+  // 找11月第一个周六
+  var nov1 = new Date(year, 10, 1); // 11月=10
+  var dayOfWeek = nov1.getDay(); // 0=周日
+  var firstSat = 1 + (6 - dayOfWeek + 7) % 7;
+  var examDate = new Date(year, 10, firstSat);
+  var months = (examDate.getFullYear() - now.getFullYear()) * 12 + (examDate.getMonth() - now.getMonth());
+  if (months <= 0 && now > examDate) {
+    // 今年的已过，看明年
+    examDate = new Date(year + 1, 10, firstSat);
+    months = 12 + (examDate.getMonth() - now.getMonth());
+  }
+  if (!localStorage.getItem('mmj_exam_date')) {
+    localStorage.setItem('mmj_exam_date', examDate.toISOString().slice(0, 10));
+  }
+  return months;
+}
+
 function getGreeting() {
   const h = new Date().getHours();
   if (h < 12) return '早上好';
@@ -439,6 +544,8 @@ window.startLearning = function() {
 };
 
 window.startMode = async function(mode) {
+  if (!checkPaywall()) return;
+  useFreeQuota(mode === 'mock' ? 20 : (mode === 'beginner' ? 5 : 10));
   State.trackEvent('mode_started', { mode, subjectId: State.getActiveSubjectId() });
   // 立即显示加载状态
   const app = document.getElementById('app');
@@ -473,7 +580,7 @@ window.showFeedback = function() {
   if (!app) return;
   app.innerHTML = `
     <nav class="top-nav">
-      <div class="nav-brand" onclick="location.reload()">职考通</div>
+      <div class="nav-brand" onclick="location.reload()">极简智考<span style="font-size:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:2px 6px;border-radius:4px;margin-left:6px;font-weight:500;vertical-align:middle">🧠 AI驱动</span></div>
       <span style="font-weight:600">问题反馈</span>
     </nav>
     <main class="main-content">
@@ -550,7 +657,7 @@ window.showSharePoster = async function() {
 
   // 底部CTA
   ctx.fillStyle = '#10b981'; ctx.font = 'bold 22px Inter, system-ui, sans-serif';
-  ctx.fillText('职考通 · 慢慢记', 270, 730);
+  ctx.fillText('极简智考 · 慢慢记', 270, 730);
   ctx.fillStyle = '#64748b'; ctx.font = '14px Inter, system-ui, sans-serif';
   ctx.fillText('碎片时间 · 零基础也能过', 270, 765);
   ctx.fillText('扫描二维码开始免费刷题', 270, 795);
@@ -616,8 +723,8 @@ window.loadAIAnalysis = function() {
   const items = [];
 
   // 规则1: 总题量不足
-  if (total < 5) {
-    items.push({ icon: '📝', msg: `已刷${total}题，再刷${5-total}题解锁AI诊断`, color: '#94a3b8' });
+  if (total < 20) {
+    items.push({ icon: '📝', msg: `已刷${total}题，再刷${20-total}题解锁AI诊断`, color: '#94a3b8' });
   } else {
     // 规则2: 正确率低 → 建议看解析
     if (mastery < 50) {
@@ -674,6 +781,79 @@ window.startTargetedPractice = async function() {
   } catch(e) { console.error(e); window.goHome(); }
 };
 
+// ─── 全局函数 (不在模板内·可执行) ───
+window.startAIQuick = async function(prompt) {
+  if (!checkPaywall()) return;
+  useFreeQuota(5);
+  var a = document.getElementById('app');
+  a.innerHTML = '<div style=display:flex;align-items:center;justify-content:center;min-height:100vh><div style=text-align:center><div style=font-size:48px>🤖</div><div style=font-size:16px;font-weight:700>AI正在出题...</div></div></div>';
+  try {
+    console.log('[AI] 调用出题API, prompt:', prompt);
+    var r = await generateQuestions({ prompt: prompt, count: prompt.includes('5') ? 5 : 10 });
+    console.log('[AI] API返回:', r ? (r.questions ? r.questions.length + '道题' : 'no questions') : 'null');
+    if (!r || !r.questions || !r.questions.length) {
+      alert('AI出题返回空，请稍后重试（已用离线题库代替）');
+      // 直接用离线题目
+      r = { questions: [{ id: 'fb-1', stem: '当经济处于衰退期时，政府应采取的财政政策是？', type: 'single', options: ['A. 增加税收','B. 减少政府支出','C. 增加政府支出','D. 提高利率'], answer: 'C', analysis: '扩张性财政政策：增加政府支出刺激总需求。', difficulty: 2, chapter: 8 }] };
+    }
+    QuizCard.render('advanced', r.questions);
+  } catch(e) { console.error('[AI] 异常:', e); alert('出题异常: ' + e.message); window.goHome(); }
+};
+window.startAIWeak = async function() {
+  var a = document.getElementById('app');
+  a.innerHTML = '<div style=display:flex;align-items:center;justify-content:center;min-height:100vh><div style=text-align:center><div style=font-size:48px>🎯</div><div style=font-size:16px;font-weight:700>AI分析薄弱项中...</div></div></div>';
+  try {
+    var progress = JSON.parse(localStorage.getItem('mmj_progress') || '[]');
+    var weak = analyzeWeakPoints(progress);
+    var chapters = weak.weakest.map(function(w) { return w.num; });
+    if (!chapters.length) { alert('请先刷一些题，AI才能分析薄弱项'); window.goHome(); return; }
+    var r = await generateWeakPointQuestions(chapters, progress, 10);
+    if (!r.questions || !r.questions.length) { alert('出题失败'); window.goHome(); return; }
+    QuizCard.render('advanced', r.questions);
+  } catch(e) { alert('出题失败: ' + e.message); window.goHome(); }
+};
+window.startAIFromPrompt = async function() {
+  var p = document.getElementById('ai-prompt-input');
+  if (!p || !p.value.trim()) { alert('请输入出题要求，如：宏观经济10道中等难度'); return; }
+  window.startAIQuick(p.value.trim());
+};
+window.startAIExam = async function() {
+  var a = document.getElementById('app');
+  a.innerHTML = '<div style=display:flex;align-items:center;justify-content:center;min-height:100vh><div style=text-align:center><div style=font-size:48px>📝</div><div style=font-size:16px;font-weight:700>AI正在组卷...</div></div></div>';
+  try {
+    var r = await generateQuestions({ prompt: '模拟考试组卷', count: 20, mode: 'exam', difficulty: 'medium' });
+    if (!r.questions || !r.questions.length) { alert('AI组卷失败'); window.goHome(); return; }
+    QuizCard.render('mock', r.questions);
+  } catch(e) { alert('组卷失败: ' + e.message); window.goHome(); }
+};
+
+// ─── 前端错误自动捕获 → 积累知识库 ───
+window.addEventListener('error', function(e) {
+  var msg = e.message || e.error?.message || 'unknown';
+  if (msg === 'unknown' || msg.includes('ResizeObserver')) return; // 忽略无关错误
+  var fp = msg.toLowerCase().replace(/[0-9a-f]{8,}/g,'<ID>').slice(0,100);
+  var key = 'fe_err_' + fp.replace(/[^a-z]/g,'').slice(0,30);
+  var count = parseInt(localStorage.getItem(key) || '0') + 1;
+  localStorage.setItem(key, count);
+  // 同错误≥3次→上报服务端
+  if (count >= 3) {
+    fetch('/api/kag/sync', { method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({type:'frontend_error',signature:key,message:msg,count:count,url:location.href}) })
+    .catch(function(){});
+  }
+});
+window.addEventListener('unhandledrejection', function(e) {
+  var msg = (e.reason?.message || String(e.reason)).slice(0,200);
+  var key = 'fe_rej_' + msg.replace(/[^a-z]/g,'').slice(0,30);
+  var count = parseInt(localStorage.getItem(key) || '0') + 1;
+  localStorage.setItem(key, count);
+  if (count >= 3) {
+    fetch('/api/kag/sync', { method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({type:'unhandled_rejection',signature:key,message:msg,count:count}) })
+    .catch(function(){});
+  }
+});
+
 // ─── 启动 ───
 
 // R24 SW + R37 Onboarding
@@ -695,7 +875,14 @@ window.goHome = function() {
   app.innerHTML = '';
   renderDashboardShell();
   populateDashboardData();
-  setTimeout(() => { injectAIPanels(); renderLearningCenter(); }, 50);
+  setTimeout(function() { try { if (typeof injectAIPanels === 'function') injectAIPanels(); if (typeof renderLearningCenter === 'function') renderLearningCenter(); } catch(e) {} }, 50);
 };
+
+// ─── 支付模块 (L3组件·单一职责) ───
+import('./components/payment.js').then(function(m) {
+  m.pollActivation();
+  // 挂载到window，等dashboard渲染完再注入
+  window.__injectPayment = function() { m.injectTestButton(); m.bindMembershipButtons(); };
+});
 
 document.addEventListener('DOMContentLoaded', bootstrap);

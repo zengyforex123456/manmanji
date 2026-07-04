@@ -19,7 +19,7 @@ export function maybeShowOnboarding() {
         <div style="font-size:40px;margin-bottom:12px">🎯</div>
         <div id="onboarding-step" style="font-size:18px;font-weight:800;margin-bottom:8px">选择备考科目</div>
         <div id="onboarding-content" style="font-size:14px;color:var(--text-secondary,#475569);margin-bottom:20px;line-height:1.6">
-          职考通支持8大职业考试品类。<br>先从「中级经济师」开始吧！
+          极简智考支持8大职业考试品类。<br>先从「中级经济师」开始吧！
         </div>
         <div id="onboarding-actions">
           <button onclick="Onboarding.next('econ')" style="padding:12px 32px;background:#0f766e;color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin:4px;width:100%">中级经济师</button>

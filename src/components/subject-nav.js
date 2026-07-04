@@ -1,36 +1,14 @@
 // 20门职称考试响应式导航（网格卡片+智能排序+分类筛选+搜索）
 import { State } from '../core/state.js';
 
-// ─── 20门考试数据 ───
+// ─── 极简智考·仅中级经济师 ───
 const ALL_EXAMS = [
-  // 建筑工程
-  { id:'construct1', name:'一级建造师', icon:'🏗️', category:'建筑工程', hot:95, examDate:'2026-09', questions:5000 },
-  { id:'construct2', name:'二级建造师', icon:'🏗️', category:'建筑工程', hot:90, examDate:'2026-06', questions:4500 },
-  { id:'cost', name:'造价工程师', icon:'📐', category:'建筑工程', hot:75, examDate:'2026-10', questions:3000 },
-  { id:'supervise', name:'监理工程师', icon:'📋', category:'建筑工程', hot:60, examDate:'2026-05', questions:2500 },
-  // 经济金融
   { id:'econ', name:'中级经济师', icon:'📊', category:'经济金融', hot:98, examDate:'2026-11', active:true,
     children: [
       { id:'econ', name:'经济基础', icon:'📊', questions:19749 },
       { id:'hr', name:'人力资源管理', icon:'👥', questions:10545 },
       { id:'biz', name:'工商管理', icon:'🏭', questions:4740 },
     ]},
-  { id:'accounting', name:'中级会计师', icon:'🧮', category:'经济金融', hot:88, examDate:'2026-09', questions:4000 },
-  { id:'banking', name:'银行从业', icon:'🏦', category:'经济金融', hot:55, questions:2000 },
-  { id:'securities', name:'证券从业', icon:'📈', category:'经济金融', hot:50, questions:1800 },
-  // 医药卫生
-  { id:'doctor', name:'执业医师', icon:'🩺', category:'医药卫生', hot:85, examDate:'2026-08', questions:6000 },
-  { id:'pharmacist', name:'执业药师', icon:'💊', category:'医药卫生', hot:70, examDate:'2026-10', questions:4500 },
-  { id:'nurse', name:'护士执业', icon:'🏥', category:'医药卫生', hot:65, questions:3500 },
-  { id:'health', name:'健康管理师', icon:'🧘', category:'医药卫生', hot:40, questions:1500 },
-  // 计算机
-  { id:'soft-high', name:'软考高级', icon:'💻', category:'计算机', hot:55, examDate:'2026-05', questions:3000 },
-  { id:'soft-mid', name:'软考中级', icon:'💻', category:'计算机', hot:50, examDate:'2026-05', questions:2500 },
-  { id:'computer', name:'计算机等级', icon:'⌨️', category:'计算机', hot:45, questions:2000 },
-  // 其他
-  { id:'teacher', name:'教师资格证', icon:'📚', category:'其他', hot:80, examDate:'2026-03', questions:3500 },
-  { id:'social', name:'社会工作者', icon:'🤝', category:'其他', hot:45, examDate:'2026-06', questions:2000 },
-  { id:'law', name:'法律职业资格', icon:'⚖️', category:'其他', hot:60, examDate:'2026-09', questions:5000 },
 ];
 
 const CATEGORIES = ['全部','建筑工程','经济金融','医药卫生','计算机','其他'];

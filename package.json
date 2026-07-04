@@ -18,6 +18,8 @@
     "analyze:users": "node scripts/analyze-users.cjs",
     "analyze:marketing": "node scripts/analyze-marketing.cjs",
     "analyze:ab": "node scripts/ab-test-validator.cjs",
+    "deploy": "bash deploy/deploy-safe.sh",
+    "test:smoke": "node tests/smoke-test.js",
     "analyze:conversion": "node scripts/optimize-conversion.cjs"
   },
   "devDependencies": {

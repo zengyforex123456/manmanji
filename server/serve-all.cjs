@@ -60,8 +60,45 @@ const server = http.createServer((req, res) => {
   }
 
   if (p === '/admin') {
+    // 读取最新分析报告
+    const analysisDir = path.join(__dirname, '..', 'docs', 'analysis');
+    const marketingDir = path.join(__dirname, '..', 'docs', 'marketing');
+    const readLatest = (dir) => { try { const files = fs.readdirSync(dir).filter(f=>f.endsWith('.md')).sort().reverse(); return files.length>0?fs.readFileSync(path.join(dir,files[0]),'utf-8').substring(0,3000):''; } catch(e) { return ''; } };
+    const userReport = readLatest(analysisDir);
+    const mktReport = readLatest(marketingDir);
+    const totalEvents = metrics.length;
+    const answers = metrics.filter(e=>e.event==='question_answered');
+    const correctRate = answers.length>0 ? (answers.filter(a=>a.data?.correct).length/answers.length*100).toFixed(1) : 'N/A';
+
     res.setHeader('Content-Type','text/html;charset=utf-8');
-    res.end(`<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>慢慢记·管理后台</title><style>body{font-family:system-ui;background:#0f172a;color:#e2e8f0;max-width:900px;margin:0 auto;padding:24px}h1{color:#38bdf8}a{color:#38bdf8}</style></head><body><h1>📊 管理后台</h1><p>总事件: ${metrics.length} | 反馈: ${feedbacks.length} | 用户: ${Object.keys(users).length}</p><p><a href="/">← 返回首页</a></p></body></html>`);
+    res.end(`<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>极简智考·智策分析后台</title>
+<style>:root{--bg:#0b1120;--card:#111827;--border:#1e293b;--text:#e2e8f0;--muted:#64748b;--primary:#38bdf8;--success:#10b981;--warn:#f59e0b}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui;background:var(--bg);color:var(--text);max-width:1100px;margin:0 auto;padding:24px}
+h1{color:var(--primary);font-size:22px;margin-bottom:4px}h2{font-size:16px;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.subtitle{color:var(--muted);font-size:13px;margin-bottom:20px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.stat-val{font-size:26px;font-weight:800;color:var(--primary)}.stat-label{font-size:11px;color:var(--muted);margin-top:4px}
+.report{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;max-height:400px;overflow:auto;font-size:13px;line-height:1.6;white-space:pre-wrap}
+a{color:var(--primary)}.btn{display:inline-block;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;margin:4px;background:var(--card);border:1px solid var(--border);color:var(--text)}.btn-primary{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+</style></head><body>
+<h1>📊 极简智考 · 智策分析后台</h1><p class="subtitle">实时数据 + AI分析报告 | ${new Date().toLocaleString('zh-CN')}</p>
+<div class="stats">
+  <div class="stat"><div class="stat-val">${totalEvents}</div><div class="stat-label">总事件</div></div>
+  <div class="stat"><div class="stat-val">${answers.length}</div><div class="stat-label">总答题</div></div>
+  <div class="stat"><div class="stat-val">${correctRate}%</div><div class="stat-label">正确率</div></div>
+  <div class="stat"><div class="stat-val">${feedbacks.length}</div><div class="stat-label">用户反馈</div></div>
+  <div class="stat"><div class="stat-val">${Object.keys(users).filter(k=>k!=='test').length}</div><div class="stat-label">用户数</div></div>
+</div>
+<div style="margin-bottom:16px">
+  <a href="/" class="btn">← 返回首页</a>
+  <a href="/admin?refresh=1" class="btn btn-primary">🔄 刷新分析</a>
+</div>
+<h2>📈 用户分析报告</h2>
+<div class="report">${userReport||'暂无报告 — 运行 npm run analyze 生成'}</div>
+<h2>📢 营销分析报告</h2>
+<div class="report">${mktReport||'暂无报告'}</div>
+</body></html>`);
     return;
   }
 
@@ -72,7 +109,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🚀 慢慢记 已启动: http://localhost:${PORT}`);
+  console.log(`\n🚀 极简智考 已启动: http://localhost:${PORT}`);
   console.log(`   API: http://localhost:${PORT}/api/health`);
   console.log(`   管理: http://localhost:${PORT}/admin\n`);
 });

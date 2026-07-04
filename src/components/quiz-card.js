@@ -95,7 +95,7 @@ function renderQuestion(q, showFeedback = false) {
   app.innerHTML = `
     <nav class="top-nav">
       <span onclick="window.goHome()" style="cursor:pointer;font-size:14px;color:var(--text-secondary);margin-right:8px">← 返回</span>
-      <div class="nav-brand" onclick="QuizCard.saveAndExit()">职考通</div>
+      <div class="nav-brand" onclick="QuizCard.saveAndExit()">极简智考</div>
       <span style="font-weight:600;font-size:14px">${modeLabel}</span>
       ${timerHtml}
       <span style="color:var(--text-secondary);font-size:13px">${idx}/${total}</span>
@@ -214,7 +214,7 @@ function finish() {
   app.innerHTML = `
     <nav class="top-nav">
       <span onclick="window.goHome()" style="cursor:pointer;font-size:14px;color:var(--text-secondary);margin-right:8px">← 返回</span>
-      <div class="nav-brand" onclick="window.goHome()">职考通</div>
+      <div class="nav-brand" onclick="window.goHome()">极简智考</div>
       <span style="font-weight:600">${_currentMode === 'mock' ? '模考成绩' : '刷题完成'}</span>
     </nav>
     <main class="main-content" style="text-align:center">

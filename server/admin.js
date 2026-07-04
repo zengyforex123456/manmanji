@@ -59,7 +59,7 @@ router.get('/', (req, res) => {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>慢慢记 — 智策分析后台</title>
+<title>极简智考 — 智策分析后台</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: Inter, system-ui, -apple-system, sans-serif; background:#0f172a; color:#e2e8f0; min-height:100vh; }
@@ -90,7 +90,7 @@ router.get('/', (req, res) => {
 <body>
 <div class="container">
   <h1>📊 智策分析后台</h1>
-  <p class="subtitle">慢慢记(ManManJi) 数据分析 · 部署版本 · ${new Date().toLocaleString('zh-CN')}</p>
+  <p class="subtitle">极简智考(ManManJi) 数据分析 · 部署版本 · ${new Date().toLocaleString('zh-CN')}</p>
 
   <div class="cards">
     <div class="card"><div class="value">${dataSummary.totalEvents || 0}</div><div class="label">总事件数</div></div>

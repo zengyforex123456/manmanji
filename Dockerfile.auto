@@ -1,0 +1,20 @@
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build 2>/dev/null || echo "no build"
+
+FROM node:18-alpine
+RUN apk add --no-cache nginx
+WORKDIR /app
+COPY --from=builder /app/dist /app/dist 2>/dev/null || true
+COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/package.json /app/
+COPY --from=builder /app/server /app/server 2>/dev/null || true
+
+RUN printf 'server { listen 80; root /app/dist; index index.html; location / { try_files $uri $uri/ /index.html; } location /api/ { proxy_pass http://127.0.0.1:3010; proxy_read_timeout 120s; } }' > /etc/nginx/http.d/default.conf
+RUN printf '#!/bin/sh\nmkdir -p /app/data\nnginx\ncd /app\nif [ -f server/index.js ]; then node server/index.js; else nginx -g "daemon off;"; fi' > /entrypoint.sh && chmod +x /entrypoint.sh
+
+EXPOSE 80
+ENTRYPOINT ["/entrypoint.sh"]

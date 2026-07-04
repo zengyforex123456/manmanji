@@ -1,15 +1,28 @@
 // 极简登录模块
 import { State } from '../core/state.js';
-const API = '';
+const API_BASE = '/api/auth';
+
+async function apiLogin(username, password) {
+  var res = await fetch(API_BASE + '/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
+  var data = await res.json();
+  if (!res.ok) throw new Error(data.error || '登录失败');
+  return data;
+}
+async function apiRegister(username, password) {
+  var res = await fetch(API_BASE + '/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
+  var data = await res.json();
+  if (!res.ok) throw new Error(data.error || '注册失败');
+  return data;
+}
 
 let _tab = 'phone';
 
 function render(cb) {
   document.getElementById('app').innerHTML = `
 
-    <nav class="top-nav"><span id="btn-back" style="cursor:pointer;font-size:14px;color:var(--text-secondary)">←</span><div class="nav-brand">职考通</div><span></span></nav>
+    <nav class="top-nav"><span id="btn-back" style="cursor:pointer;font-size:14px;color:var(--text-secondary)">←</span><div class="nav-brand">极简智考</div><span></span></nav>
     <main style="max-width:360px;margin:32px auto;padding:0 16px">
-      <div style="text-align:center;margin-bottom:20px"><div style="font-size:36px">📚</div><div style="font-size:18px;font-weight:800">登录职考通</div></div>
+      <div style="text-align:center;margin-bottom:20px"><div style="font-size:36px">📚</div><div style="font-size:18px;font-weight:800">登录极简智考</div></div>
       <div class="auth-tabs">
         <div class="auth-tab ${_tab=='phone'?'active':''}" id="tab-phone">手机</div>
         <div class="auth-tab ${_tab=='pwd'?'active':''}" id="tab-pwd">密码</div>
@@ -67,25 +80,23 @@ async function loginPhone() {
 }
 
 async function login() {
-  const un = $('un'), pw = $('pw'), m = $('#m2');
+  var un = $('un'), pw = $('pw'), m = $('#m2');
   if (!un || !pw) { mT(m, '请输入用户名和密码', 1); return; }
   try {
-    const r = await fetch(`${API}/api/auth/login-password`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:un,password:pw})});
-    const d = await r.json();
-    if (d.success) ok(d.user, 'password'); else mT(m, d.error, 1);
-  } catch(e) { mT(m, '登录失败', 1); }
+    var d = await apiLogin(un, pw);
+    if (d.token) ok(d, 'password'); else mT(m, d.error, 1);
+  } catch(e) { mT(m, e.message || '登录失败', 1); }
 }
 
 async function reg() {
-  const un = $('un'), pw = $('pw');
+  var un = $('un'), pw = $('pw');
   if (!un || un.length < 3) { alert('用户名至少3个字符'); return; }
   if (!pw || pw.length < 6) { alert('密码至少6个字符'); return; }
   try {
-    const r = await fetch(`${API}/api/auth/register`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:un,password:pw})});
-    const d = await r.json();
-    if (d.success) { alert('注册成功！'); ok(d.user, 'password'); }
+    var d = await apiRegister(un, pw);
+    if (d.token) { alert('注册成功！'); ok(d, 'password'); }
     else { alert(d.error); }
-  } catch(e) { alert('注册失败，请检查网络'); }
+  } catch(e) { alert(e.message || '注册失败，请检查网络'); }
 }
 
 async function wx() {
@@ -96,13 +107,17 @@ async function wx() {
   } catch(e) {}
 }
 
-function ok(user, type) {
-  localStorage.setItem('mmj_token', btoa(JSON.stringify({phone:'u:'+(user.username||user.phone||'wx'),ts:Date.now()})));
-  localStorage.setItem('mmj_user', JSON.stringify({...user, loginType:type}));
-  State.setUserId(user.username||user.phone, type);
-  State.trackEvent('user_registered', { loginType: type, username: user.username });
-  import('../services/ebbinghaus.js').then(m => m.Ebbinghaus.pullFromCloud());
-  if (window._onLoginOk) window._onLoginOk(user); else window.goHome();
+function ok(data, type) {
+  // 保存JWT token
+  if (data.token) localStorage.setItem('mmj_token', data.token);
+  // 更新用户状态
+  var state = JSON.parse(localStorage.getItem('manmanji_user_state') || '{}');
+  state.userId = data.username || data.id || 'user';
+  state.membershipTier = data.membership || 'free';
+  localStorage.setItem('manmanji_user_state', JSON.stringify(state));
+  State.setUserId(data.username || data.id, type);
+  State.trackEvent('user_login', { loginType: type });
+  if (window._onLoginOk) window._onLoginOk(data); else window.goHome();
 }
 
 function $(id) { return document.getElementById(id)?.value?.trim() || ''; }

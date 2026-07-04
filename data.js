@@ -2,14 +2,7 @@
 
 const COURSE_DATA = {
   subjects: [
-    { id: "econ", name: "中级经济师" },
-    { id: "accounting", name: "中级会计师" },
-    { id: "teacher", name: "教师资格证" },
-    { id: "social", name: "社会工作者" },
-    { id: "construct", name: "二级建造师" },
-    { id: "hr", name: "人力资源管理师" },
-    { id: "tax", name: "税务师" },
-    { id: "acc_junior", name: "初级会计师" }
+    { id: "econ", name: "中级经济师" }
   ],
   
   chapters: {
@@ -721,7 +714,7 @@ const DEFAULT_USER_STATE = {
   fontSizeClass: "font-normal",
   eyeProtectMode: false,
   activeSubjectId: "econ", // 默认当前激活科目
-  membershipTier: "vip", // 演示用默认全站通卡
+  membershipTier: "free", // 默认免费用户·每日20题
   
   // 各科目独立存储进度
   subjectsState: {
