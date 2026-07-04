@@ -1,30 +1,16 @@
-// 极简智考 Dashboard V3 — CSS设计体系
-import { getGreeting, getFreeQuota } from './WelcomeBar.js';
+// 极简智考 Dashboard V3 — 组件化·CSS设计体系
+import { getFreeQuota } from './WelcomeBar.js';
+import { renderTopBar } from './TopBar.js';
+import { renderBKT } from './BKTDiagnosis.js';
+import { renderTaskCard } from './TaskCard.js';
+import { renderAIBrain } from './AIBrain.js';
 import '../style-v2.css';
 
 var THEMES = { navy:'深蓝·稳重', gray:'灰蓝·理性', warm:'暖橙·活力' };
 
 export function renderDashboardV2(state) {
   var themeName = localStorage.getItem('mmj_theme') || 'navy';
-  var greeting = getGreeting();
-  var name = state.userId ? '考友' : '访客';
-  var examDays = Math.ceil((new Date(2026, 10, 7) - new Date()) / 86400000);
-  var totalAnswered = state.learnedPointsCount || 0;
-  var todayDone = parseInt(localStorage.getItem('mmj_today_answers') || '0');
-  var dailyTarget = 40;
-  var streak = state.daysStudied || 1;
-  var progressPct = Math.min(100, Math.round(totalAnswered / 500 * 100));
-  var dailyNeed = Math.ceil((500 - totalAnswered) / Math.max(1, examDays));
   var freeLeft = getFreeQuota();
-  var isSprint = examDays <= 30;
-  var todayPct = Math.round(todayDone / dailyTarget * 100);
-
-  var progress = [];
-  try { progress = JSON.parse(localStorage.getItem('mmj_progress') || '[]'); } catch(e) {}
-  var chapterStats = {};
-  progress.forEach(function(p) { var ch = p.chapter || 0; if (!ch) return; if (!chapterStats[ch]) chapterStats[ch] = { total: 0, wrong: 0 }; chapterStats[ch].total++; if (p.wrongCount > 0) chapterStats[ch].wrong++; });
-  var weakest = Object.entries(chapterStats).filter(function(e) { return e[1].total >= 3; }).map(function(e) { return { num: parseInt(e[0]), acc: Math.round((1 - e[1].wrong / e[1].total) * 100) }; }).sort(function(a, b) { return a.acc - b.acc; }).slice(0, 3);
-  var totalChapters = Object.keys(chapterStats).length;
 
   return '<div data-theme="' + themeName + '">'
 
@@ -36,40 +22,15 @@ export function renderDashboardV2(state) {
     + '</div>'
 
     // Top bar
-    + '<div class="topbar">'
-    + '<div class="topbar-greeting">👋 ' + greeting + '，' + name + ' · 连续 <b style="color:var(--c-accent)">' + streak + '</b> 天</div>'
-    + '<div class="topbar-stats">'
-    + '<span class="topbar-number">' + examDays + '</span><span class="topbar-label">天后考试</span>'
-    + '<span class="topbar-sep">|</span>'
-    + '<span class="topbar-stat">📊 <b>' + progressPct + '%</b></span>'
-    + '<span class="topbar-stat">📝 <b>' + totalAnswered + '</b>题</span>'
-    + '<span class="topbar-sep">|</span>'
-    + '<span style="font-size:var(--text-sm);color:var(--c-primary);cursor:pointer;font-weight:600;text-decoration:underline" onclick="renderSubjectNav()">切换科目 ▸</span>'
-    + '</div></div>'
-
-    // Sprint banner
-    + (isSprint ? '<div class="sprint-banner">⚡ 考前冲刺 · 距考试仅 <b>' + examDays + '</b> 天<br><span style="font-size:12px;opacity:.8;font-weight:400">每日目标 ' + Math.ceil(dailyTarget * 1.5) + ' 题 · 重点攻克薄弱章节</span></div>' : '')
+    + renderTopBar(state)
 
     // BKT diagnosis
-    + '<div class="bkt-card">'
-    + '<div class="bkt-header"><span class="bkt-title">🧠 AI私教诊断</span><span class="bkt-status">' + (totalChapters > 0 ? '已诊断 ' + totalChapters + ' 章' : '刷题后激活') + '</span></div>'
-    + (weakest.length > 0
-      ? '<div class="bkt-chapters">' + weakest.map(function(w) {
-        var color = w.acc < 40 ? 'var(--c-danger)' : w.acc < 60 ? 'var(--c-accent)' : 'var(--c-success)';
-        return '<div class="bkt-chapter" onclick="startWeakPractice(' + w.num + ')"><div class="bkt-chapter-num">第' + w.num + '章</div><div class="bkt-chapter-pct" style="color:' + color + '">' + w.acc + '%</div><div class="bkt-chapter-label">掌握度</div></div>';
-      }).join('') + '</div>'
-      : '<div class="bkt-empty">📝 刷题后自动激活 · AI分析薄弱章节</div>')
-    + '</div>'
+    + renderBKT(state)
 
     // Task card
-    + '<div class="task-card">'
-    + '<div class="task-header"><span>📌 今日任务</span><span>' + todayDone + '/' + dailyTarget + ' 题</span></div>'
-    + '<div class="task-progress"><div class="task-progress-bar" style="width:' + todayPct + '%"></div></div>'
-    + '<button class="btn-primary" onclick="startMode(\'beginner\')">📝 开始刷题去完成 →</button>'
-    + '<button class="btn-ghost" onclick="startMode(\'mock\')">📝 模拟考试' + (todayDone < dailyTarget ? ' · 先刷题解锁 →' : ' · 开始挑战 →') + '</button>'
-    + '</div>'
+    + renderTaskCard(state)
 
-    // AI Section
+    // AI section (collapsed)
     + '<details class="ai-section"><summary class="ai-summary"><span>🧠 AI智能出题<span class="ai-badge">VIP</span></span></summary>'
     + '<div class="ai-body">'
     + '<div class="ai-btns">'
@@ -97,6 +58,23 @@ export function renderDashboardV2(state) {
     + '<button class="nav-item" onclick="LoginPage.renderProfile()"><span class="nav-icon">👤</span>我的</button>'
     + '</nav>'
 
-    // AI placeholder rotation
-    + '<script>!function(){var t=["出10道宏观经济单选题","组一套模拟卷","GDP核算的题来5道","货币政策单选题5道","财政政策计算题3道","薄弱项专项练习"],i=document.getElementById("ai-prompt-input");i&&(i.placeholder=t[Math.floor(Math.random()*t.length)],setInterval(function(){i.placeholder=t[Math.floor(Math.random()*t.length)]},5000));window.quickAI=function(e){var inp=document.getElementById("ai-prompt-input");inp.value=e.textContent;startAIFromPrompt()}}()</script>';
+    // Inline helpers
+    + '<script>'
+    + '!function(){'
+    + 'var t=["出10道宏观经济单选题","组一套模拟卷","GDP核算来5道","货币政策5道","财政政策计算题3道","薄弱项专项练习"],i=document.getElementById("ai-prompt-input");'
+    + 'i&&(i.placeholder=t[Math.floor(Math.random()*t.length)],setInterval(function(){i.placeholder=t[Math.floor(Math.random()*t.length)]},5000));'
+    + 'window.quickAI=function(e){i.value=e.textContent;startAIFromPrompt()};'
+    + 'window.toggleSubjects=function(){'
+    + 'var ov=document.getElementById("subj-overlay");if(ov){ov.remove();return}'
+    + 'var d=document.createElement("div");d.id="subj-overlay";'
+    + 'd.style.cssText="position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center";'
+    + 'd.onclick=function(e){if(e.target===d)d.remove()};'
+    + 'd.innerHTML=\'<div style="background:#fff;border-radius:16px;padding:24px;max-width:340px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)"><h3 style="margin:0 0 16px">📊 切换科目</h3>'
+    + \'<div onclick="window.switchSubject(\\\'econ\\\');document.getElementById(\\\'subj-overlay\\\').remove()" style="padding:12px;border-radius:8px;cursor:pointer;margin:6px 0;background:#eff6ff;font-weight:600">📊 经济基础 (19,749题)</div>\'
+    + \'<div onclick="window.switchSubject(\\\'hr\\\');document.getElementById(\\\'subj-overlay\\\').remove()" style="padding:12px;border-radius:8px;cursor:pointer;margin:6px 0;background:#f0fdf4;font-weight:600">👥 人力资源管理 (10,545题)</div>\'
+    + \'<div onclick="window.switchSubject(\\\'biz\\\');document.getElementById(\\\'subj-overlay\\\').remove()" style="padding:12px;border-radius:8px;cursor:pointer;margin:6px 0;background:#fef3c7;font-weight:600">🏭 工商管理 (4,740题)</div>\'
+    + \'<button onclick="document.getElementById(\\\'subj-overlay\\\').remove()" style="display:block;width:100%;margin-top:12px;padding:10px;background:#f1f5f9;border:none;border-radius:8px;cursor:pointer;font-size:14px">取消</button></div>\';'
+    + 'document.body.appendChild(d)};'
+    + 'localStorage.removeItem("mmj_pending_order");'
+    + '}()</script>';
 }

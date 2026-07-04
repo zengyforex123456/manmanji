@@ -18,6 +18,7 @@ const RECENT_KEY = 'mmj_recent_exams';
 
 // ─── 渲染导航 ───
 export function renderSubjectNav() {
+  window.renderSubjectNav = renderSubjectNav; // 暴露到全局，供onclick使用
   const nav = document.getElementById('nav-subjects');
   if (!nav) return;
 
