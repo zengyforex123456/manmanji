@@ -11,6 +11,7 @@ import { renderSubjectNav } from './components/subject-nav.js';
 import { generateQuestions, generateWeakPointQuestions, analyzeWeakPoints } from './services/ai-question-generator.js';
 import { renderWelcomeBar, updateCountdown } from './components/WelcomeBar.js';
 import { renderAIBrain } from './components/AIBrain.js';
+import { renderDashboardV2 } from './components/DashboardV2.js';
 import './style.css';
 
 // LC chapter functions (lightweight)
@@ -143,148 +144,10 @@ function renderDashboardShell() {
   const app = document.getElementById('app');
   if (!app) return;
   const state = State.state;
-
-  app.innerHTML = `
-    <!-- 离线指示器 -->
-    <div id="offline-bar" style="display:none;position:fixed;top:0;left:0;right:0;height:32px;line-height:32px;text-align:center;color:#fff;font-size:13px;z-index:9999;"></div>
-
-    <!-- 崩溃恢复提示 -->
-    <div id="crash-recovery-snackbar" style="display:none;position:fixed;top:40px;left:50%;transform:translateX(-50%);padding:10px 18px;border-radius:6px;font-size:13px;font-weight:500;z-index:9998;white-space:nowrap;"></div>
-
-    <!-- 顶部导航 -->
-    <nav class="top-nav">
-      <div class="nav-brand" onclick="location.reload()">极简智考<span style="font-size:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:2px 6px;border-radius:4px;margin-left:6px;font-weight:500;vertical-align:middle">🧠 AI驱动</span></div>
-      <div class="nav-subjects" id="nav-subjects"></div>
-      <div class="nav-user" id="nav-user">
-        ${state.userId
-          ? `<span id="login-hint" style="background:var(--accent-light);border-color:var(--accent);cursor:pointer" onclick="LoginPage.renderProfile()">👤 ${state.userId.slice(-4)}</span>`
-          : `<span id="login-hint" onclick="LoginPage.render(()=>window.goHome())">🔒 登录后可跨设备同步</span>`
-        }
-      </div>
-    </nav>
-
-    <!-- 主内容区 -->
-    <main class="main-content">
-      ${renderWelcomeBar(state)}
-      <div class="stats-row">
-        <div class="stat-card"><div class="stat-label">📋 待复习</div><div class="stat-value" id="stat-due">-</div></div>
-        <div class="stat-card"><div class="stat-label">📊 掌握度</div><div class="stat-value" id="stat-mastery">-</div></div>
-        <div class="stat-card"><div class="stat-label">🔥 连续</div><div class="stat-value" id="stat-streak">${state.daysStudied || 1}天</div></div>
-      </div>
-      <div class="flow-guide" style="margin-top:12px">
-        <div class="flow-title">🎯 章节掌握度</div>
-        <div id="radar-container" style="padding:12px 0;"></div>
-      </div>
-      <div class="flow-guide" style="background:linear-gradient(135deg,#eff6ff,#faf5ff);border:1px solid #c7d2fe;border-radius:12px;padding:14px">
-        <div class="flow-title" style="color:#4f46e5">🧠 AI学习诊断 <span style="font-size:10px;background:#6366f1;color:#fff;padding:2px 6px;border-radius:4px;margin-left:4px">⭐ 推荐</span></div>
-	    <div style="display:flex;gap:6px;margin:4px 0;align-items:center">
-          <button onclick="showPricingModal()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">🔓 开通VIP</button>
-          <span style="font-size:11px;color:#92400e">¥68/科 · 有效至考试 · 今日免费' + getFreeQuota() + '题</span>
-        </div>
-        <div style="display:flex;gap:8px;margin:8px 0">
-          <input id="ai-prompt-input" type="text" placeholder="输入出题需求：如"宏观经济10道中等难度"" style="flex:1;padding:8px 12px;border:1px solid #c7d2fe;border-radius:8px;font-size:13px;outline:none" onkeydown="if(event.key==='Enter')startAIFromPrompt()">
-          <button onclick="startAIFromPrompt()" style="background:#6366f1;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px;white-space:nowrap">🎯 出题</button>
-          <button onclick="startAIExam()" style="background:#0f766e;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px;white-space:nowrap">📝 AI组卷</button>
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
-          <button onclick="startAIQuick('10道单选题')" style="background:#f1f5f9;border:1px solid #e2e8f0;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;color:#64748b">📊 10道单选</button>
-          <button onclick="startAIQuick('5道计算分析题')" style="background:#f1f5f9;border:1px solid #e2e8f0;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;color:#64748b">📈 5道计算</button>
-          <button onclick="startAIExam()" style="background:#f1f5f9;border:1px solid #e2e8f0;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;color:#64748b">📝 组模拟卷</button>
-          <button onclick="startAIWeak()" style="background:#fef3c7;border:1px solid #fcd34d;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;color:#92400e">🎯 薄弱项专项</button>
-          <button onclick="startAIQuick('每日10题综合练习')" style="background:#f1f5f9;border:1px solid #e2e8f0;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;color:#64748b">⏰ 每日10题</button>
-        </div>
-        <div id="ai-insights-content" style="padding:8px 0;font-size:13px;color:#64748b;">完成一组刷题后查看AI分析</div>
-      </div>
-      <div class="flow-guide">
-        <div class="flow-title">📖 学习流程</div>
-        <div class="flow-steps">
-          <div class="flow-step" onclick="startMode('beginner')"><div class="flow-num">1</div><div class="flow-content"><div class="flow-name">开始刷题</div><div class="flow-desc">系统自动挑选适合你的题目</div></div><div class="flow-arrow">→</div></div>
-          <div class="flow-step" onclick="LC.startMistake()"><div class="flow-num">2</div><div class="flow-content"><div class="flow-name">错题重做</div><div class="flow-desc" id="flow-mistake-count">错题会自动收集到这里</div></div><div class="flow-arrow">→</div></div>
-          <div class="flow-step" onclick="startMode('mock')"><div class="flow-num">3</div><div class="flow-content"><div class="flow-name">模拟考试</div><div class="flow-desc">105题·90分钟·全真环境</div></div></div>
-        </div>
-      </div>
-      <div class="flow-guide" style="margin-top:12px"><div class="flow-title" id="show-chapters-btn" style="cursor:pointer">📚 按章节学习 ▸</div><div id="lc-chapters-section" style="display:none"></div></div>
-      <div class="flow-guide" style="margin-top:12px">
-        <div class="flow-title">🎮 自由探索</div>
-        <div class="flow-section-hint" style="font-size:11px;color:#94a3b8;margin-bottom:10px">选择你自己的学习方式，每种方式都针对不同备考需求</div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <div class="explore-row" onclick="startAIQuestions()" style="border:1px solid #c7d2fe;background:#faf5ff">
-            <span class="explore-icon">🤖</span>
-            <span class="explore-name">AI智能出题</span>
-            <span style="font-size:9px;background:#8b5cf6;color:#fff;padding:1px 5px;border-radius:3px;margin-left:4px">⭐推荐</span>
-            <span class="explore-desc">AI生成针对性练习</span>
-            <span class="explore-why">适合：薄弱项靶向攻克</span>
-          </div>
-          <div class="explore-row" onclick="startMode('advanced')">
-            <span class="explore-icon">🎲</span>
-            <span class="explore-name">随机挑战</span>
-            <span class="explore-desc">全题库随机20题</span>
-            <span class="explore-why">适合：检验综合水平</span>
-          </div>
-          <div class="explore-row" onclick="document.getElementById('custom-panel').style.display='block'">
-            <span class="explore-icon">⚙️</span>
-            <span class="explore-name">自由组卷 ▸</span>
-            <span class="explore-desc">自选数量·模式·范围</span>
-            <span class="explore-why">适合：针对性练习</span>
-          </div>
-        </div>
-        <div id="custom-panel" style="display:none;margin-top:10px;padding:12px;background:#f8fafc;border-radius:10px">
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <select id="custom-count" style="padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;min-width:70px">
-              <option value="10">10题</option><option value="20" selected>20题</option><option value="50">50题</option><option value="105">105题</option>
-            </select>
-            <select id="custom-mode" style="padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;flex:1;min-width:150px">
-              <option value="beginner">新手（每题看解析）</option>
-              <option value="advanced" selected>进阶（做完看结果）</option>
-              <option value="mock">模考（限时90分钟）</option>
-            </select>
-            <button class="mode-btn" onclick="startCustomExam()" style="padding:8px 20px">开始</button>
-          </div>
-        </div>
-      </div>
-      <div class="flow-guide" style="margin-top:12px">
-        <div class="flow-title">🏆 成就勋章</div>
-        <div id="badge-wall" style="padding:8px 0;"></div>
-      </div>
-    </main>
-
-    <!-- 底部固定栏 -->
-    <div class="bottom-bar" style="position:fixed;bottom:0;left:0;right:0;height:56px;background:#fff;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-around;z-index:999;box-shadow:0 -2px 8px rgba(0,0,0,.05);padding-bottom:env(safe-area-inset-bottom)">
-      <button onclick="TeamMode.showTeamPanel()" style="background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-size:11px;color:#64748b;padding:4px 12px">
-        <span style="font-size:20px">👥</span>组队刷题
-      </button>
-      <button onclick="showSharePoster()" style="background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-size:11px;color:#64748b;padding:4px 12px">
-        <span style="font-size:20px">📸</span>打卡分享
-      </button>
-      <button onclick="showFeedback()" style="background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-size:11px;color:#64748b;padding:4px 12px">
-        <span style="font-size:20px">💬</span>问题反馈
-      </button>
-    </div>
-    <!-- 底部栏占位 --><div style="height:70px"></div>
-
-    <!-- 手机仿真器 -->
-    <div class="phone-preview-panel" id="phone-preview" style="display:none;">
-      <div class="phone-preview-header">
-        <span>📱 小程序预览</span>
-        <button class="text-btn" onclick="togglePhonePreview()">✕</button>
-      </div>
-      <div class="phone-preview-body" id="phone-preview-body"><div style="text-align:center;padding:40px 20px"><div style="font-size:40px;margin-bottom:12px">📱</div><div style="font-weight:800;font-size:16px;margin-bottom:4px">小程序端</div><div style="font-size:12px;color:var(--text-secondary)">刷题·听学·复盘·打卡</div></div></div>
-    </div>
-  `;
-
-  renderSubjectNav();
-
-  // 注入支付按钮 + UI增强（等dashboard DOM就绪）
+  app.innerHTML = renderDashboardV2(state);
   setTimeout(function() {
-    if (window.__injectPayment) window.__injectPayment();
     import('./components/enhance-ui.js').then(function(m) { m.enhanceDashboard(); });
   }, 300);
-
-  // 绑定章节学习点击事件（避免onclick在HMR下失效）
-  setTimeout(() => {
-    const chapBtn = document.querySelector('#show-chapters-btn');
-    if (chapBtn) chapBtn.addEventListener('click', () => window.LC?.showChapters());
-  }, 100);
 }
 
 async function populateDashboardData() {
@@ -459,23 +322,8 @@ function getFreeQuota() {
   var used = parseInt(localStorage.getItem(key) || '0');
   return Math.max(0, FREE_DAILY_LIMIT - used);
 }
-function useFreeQuota(n) {
-  var today = new Date().toDateString();
-  var key = 'mmj_daily_' + today;
-  var used = parseInt(localStorage.getItem(key) || '0');
-  localStorage.setItem(key, used + (n || 1));
-  return FREE_DAILY_LIMIT - (used + (n || 1));
-}
-function checkPaywall() {
-  var remaining = getFreeQuota();
-  var state = JSON.parse(localStorage.getItem('manmanji_user_state') || '{}');
-  if (state.membershipTier === 'vip') return true; // VIP无限
-  if (remaining <= 0) {
-    showPricingModal();
-    return false;
-  }
-  return true;
-}
+function useFreeQuota(n) { return 999; } // 开发阶段: 不限量
+function checkPaywall() { return true; }    // 开发阶段: 全开放
 function showPricingModal() {
   if (document.getElementById('pricing-modal')) return;
   var m = document.createElement('div');

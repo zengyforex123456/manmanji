@@ -2,7 +2,9 @@
 
 const COURSE_DATA = {
   subjects: [
-    { id: "econ", name: "中级经济师" }
+    { id: "econ", name: "中级经济师·经济基础" },
+    { id: "hr", name: "中级经济师·人力资源" },
+    { id: "biz", name: "中级经济师·工商管理" }
   ],
   
   chapters: {
@@ -714,7 +716,7 @@ const DEFAULT_USER_STATE = {
   fontSizeClass: "font-normal",
   eyeProtectMode: false,
   activeSubjectId: "econ", // 默认当前激活科目
-  membershipTier: "free", // 默认免费用户·每日20题
+  membershipTier: "vip", // 开发阶段: 全功能开放
   
   // 各科目独立存储进度
   subjectsState: {

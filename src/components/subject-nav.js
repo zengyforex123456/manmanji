@@ -9,6 +9,8 @@ const ALL_EXAMS = [
       { id:'hr', name:'人力资源管理', icon:'👥', questions:10545 },
       { id:'biz', name:'工商管理', icon:'🏭', questions:4740 },
     ]},
+  { id:'hr', name:'中级经济师·人力资源', icon:'👥', category:'经济金融', hot:85, examDate:'2026-11', questions:10545 },
+  { id:'biz', name:'中级经济师·工商管理', icon:'🏭', category:'经济金融', hot:80, examDate:'2026-11', questions:4740 },
 ];
 
 const CATEGORIES = ['全部','建筑工程','经济金融','医药卫生','计算机','其他'];
